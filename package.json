@@ -1,0 +1,29 @@
+{
+  "name": "xbcom",
+  "version": "1.0.0",
+  "description": "",
+  "main": "webpack.config.js",
+  "scripts": {
+    "webpack": "webpack",
+    "watch": "webpack --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meatbags/xbcom.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/meatbags/xbcom/issues"
+  },
+  "homepage": "https://github.com/meatbags/xbcom#readme",
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.0",
+    "node-normalize-scss": "^3.0.0",
+    "webpack": "^3.6.0",
+    "webpack-preset": "^0.2.0",
+    "webpack-preset-babel": "^0.2.0"
+  }
+}
