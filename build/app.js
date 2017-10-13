@@ -90,14 +90,22 @@ var App = {
     // events
     window.onresize = App.resize;
 
-    // run
-    App.ready = true;
-    App.time = new Date().getTime();
-    //App.loop();
+    // wait
+    App.loading();
   },
 
   resize: function resize() {
     App.scene.resize();
+  },
+
+  loading: function loading() {
+    if (!App.scene.getStatus()) {
+      requestAnimationFrame(App.loading);
+    } else {
+      // run
+      App.time = new Date().getTime();
+      App.loop();
+    }
   },
 
   loop: function loop() {
@@ -106,11 +114,8 @@ var App = {
     var now = new Date().getTime();
     var delta = (now - App.time) / 1000.;
     App.time = now;
-
-    if (App.ready) {
-      App.scene.update(delta);
-      App.renderer.render(App.scene.scene, App.scene.camera);
-    }
+    App.scene.update(delta);
+    App.renderer.render(App.scene.scene, App.scene.camera);
   }
 };
 
@@ -131,6 +136,10 @@ var _Player = __webpack_require__(2);
 
 var _Player2 = _interopRequireDefault(_Player);
 
+var _Loader = __webpack_require__(4);
+
+var _Loader2 = _interopRequireDefault(_Loader);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Scene = function Scene(domElement) {
@@ -140,16 +149,50 @@ var Scene = function Scene(domElement) {
 
 Scene.prototype = {
   init: function init() {
-    this.scene = new THREE.Scene();
-    this.player = new _Player2.default(this.domElement);
-    this.camera = this.player.camera;
-    this.collider = new Collider.System();
+    var self = this;
 
-    // load scenery
+    self.loader = new _Loader2.default('./assets/');
+    self.scene = new THREE.Scene();
+    self.player = new _Player2.default(self.domElement);
+    self.camera = self.player.camera;
+    self.collider = new Collider.System();
+    self.loaded = 0;
+    self.toLoad = 2;
+
+    // load collision map
+    self.loader.loadOBJ('collision_map').then(function (map) {
+      for (var i = 0; i < map.children.length; i += 1) {
+        self.collider.add(new Collider.Mesh(map.children[i].geometry));
+      }
+      self.loaded += 1;
+    }, self.error);
+
+    // load map
+    this.loader.loadOBJ('map').then(function (map) {
+      self.scene.add(map);
+      self.loaded += 1;
+    }, self.error);
+
+    // lights
+    self.lights = {
+      p1: new THREE.PointLight(0xffffff, 1)
+    };
+    self.lights.p1.position.set(0, 10, 0);
+    self.scene.add(self.lights.p1);
+  },
+
+  error: function error(err) {
+    throw err;
+  },
+
+  getStatus: function getStatus() {
+    return self.loaded === self.toLoad;
   },
 
   update: function update(delta) {
-    this.player.update(delta, this.collider);
+    var self = this;
+
+    self.player.update(delta, self.collider);
   },
 
   resize: function resize() {}
@@ -633,6 +676,92 @@ exports.scaleVector = scaleVector;
 exports.crossProduct = crossProduct;
 exports.reverseVector = reverseVector;
 exports.normalise = normalise;
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var Loader = function Loader(basePath) {
+  this.basePath = basePath;
+  this.init();
+};
+
+Loader.prototype = {
+  init: function init() {
+    this.materialLoader = new THREE.MTLLoader();
+    this.objectLoader = new THREE.OBJLoader();
+    this.materialLoader.setPath(this.basePath);
+    this.objectLoader.setPath(this.basePath);
+  },
+
+  process: function process(obj, materials) {
+    // fix materials
+
+    for (var i = 0; i < obj.children.length; i += 1) {
+      var child = obj.children[i];
+      var meta = materials.materialsInfo[child.material.name];
+
+      // load lightmaps
+      if (meta.map_ka) {
+        var uvs = child.geometry.attributes.uv.array;
+        var src = meta.map_ka;
+        var tex = new THREE.TextureLoader().load(self.basePath + src);
+
+        child.material.lightMap = tex;
+        child.material.lightMapIntensity = 1;
+        child.geometry.addAttribute('uv2', new THREE.BufferAttribute(uvs, 2));
+      }
+
+      // make glass translucent
+      if (child.material.map) {
+        // if textured, set full colour
+        child.material.color = new THREE.Color(0xffffff);
+
+        // set transparent for .png
+        if (child.material.map.image.src.indexOf('.png') !== -1) {
+          child.material.transparent = true;
+          child.material.side = THREE.DoubleSide;
+        }
+
+        // for glass
+        if (child.material.map.image.src.indexOf('glass') != -1) {
+          child.material.transparent = true;
+          child.material.opacity = 0.4;
+        }
+      } else {
+        // no texture, set colour
+        //child.material.emissive = child.material.color;
+      }
+    }
+  },
+
+  loadOBJ: function loadOBJ(filename) {
+    var self = this;
+
+    return new Promise(function (resolve, reject) {
+      try {
+        self.materialLoader.load(filename + '.mtl', function (materials) {
+          materials.preload();
+          self.objectLoader.setMaterials(materials);
+          self.objectLoader.load(filename + '.obj', function (obj) {
+            self.process(obj, materials);
+            resolve(obj);
+          });
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+};
+
+exports.default = Loader;
 
 /***/ })
 /******/ ]);

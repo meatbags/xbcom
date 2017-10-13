@@ -14,14 +14,22 @@ const App = {
     // events
     window.onresize = App.resize;
 
-    // run
-    App.ready = true;
-    App.time = (new Date()).getTime();
-    //App.loop();
+    // wait
+    App.loading();
   },
 
   resize: function() {
     App.scene.resize();
+  },
+
+  loading: function() {
+    if (!App.scene.getStatus()) {
+      requestAnimationFrame(App.loading);
+    } else {
+      // run
+      App.time = (new Date()).getTime();
+      App.loop();
+    }
   },
 
   loop: function() {
@@ -30,11 +38,8 @@ const App = {
     const now = (new Date()).getTime();
     const delta = (now - App.time) / 1000.;
     App.time = now;
-
-    if (App.ready) {
-      App.scene.update(delta);
-      App.renderer.render(App.scene.scene, App.scene.camera);
-    }
+    App.scene.update(delta);
+    App.renderer.render(App.scene.scene, App.scene.camera);
   }
 };
 
