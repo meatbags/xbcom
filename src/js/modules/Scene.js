@@ -10,29 +10,44 @@ Scene.prototype = {
   init: function() {
     const self = this;
 
+    // setup scene
     self.loader = new Loader('./assets/');
-    self.scene = new THREE.Scene();
     self.player = new Player(self.domElement);
     self.camera = self.player.camera;
+    self.scene = new THREE.Scene();
     self.collider = new Collider.System();
-    self.loaded = 0;
+    self.loadMaps();
+    self.loadLighting();
+  },
+
+  loadMaps: function() {
+    // load maps
+
+    const self = this;
     self.toLoad = 2;
 
-    // load collision map
-    self.loader.loadOBJ('collision_map').then(function(map){
+    // models (async)
+    this.loader.loadOBJ('map').then(function(map) {
+      self.scene.add(map);
+      self.toLoad -= 1;
+    }, function(err) {
+      throw(err);
+    });
+
+    // load collision map (async)
+    self.loader.loadOBJ('collision_map').then(function(map) {
       for (let i=0; i<map.children.length; i+=1) {
         self.collider.add(new Collider.Mesh(map.children[i].geometry));
       }
-      self.loaded += 1;
-    }, self.error);
+      self.toLoad -= 1;
+    }, function(err) {
+      throw(err);
+    });
+  },
 
-    // load map
-    this.loader.loadOBJ('map').then(function(map) {
-      self.scene.add(map);
-      self.loaded += 1;
-    }, self.error);
+  loadLighting: function() {
+    const self = this;
 
-    // lights
     self.lights = {
       p1: new THREE.PointLight(0xffffff, 1)
     };
@@ -40,12 +55,8 @@ Scene.prototype = {
     self.scene.add(self.lights.p1);
   },
 
-  error: function(err) {
-    throw(err);
-  },
-
-  getStatus: function() {
-    return (self.loaded === self.toLoad);
+  isLoaded: function() {
+    return (this.toLoad <= 0);
   },
 
   update: function(delta) {

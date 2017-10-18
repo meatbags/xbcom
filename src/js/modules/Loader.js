@@ -1,3 +1,5 @@
+import Config from './Config';
+
 const Loader = function(basePath) {
   this.basePath = basePath;
   this.init();
@@ -18,6 +20,9 @@ Loader.prototype = {
       const child = obj.children[i];
       const meta = materials.materialsInfo[child.material.name];
 
+      // set material
+      child.material = materials.materials[child.material.name];
+
       // load lightmaps
       if (meta.map_ka) {
         const uvs = child.geometry.attributes.uv.array;
@@ -25,7 +30,7 @@ Loader.prototype = {
         const tex = new THREE.TextureLoader().load(self.basePath + src);
 
         child.material.lightMap = tex;
-        child.material.lightMapIntensity = 1;
+        child.material.lightMapIntensity = Config.Loader.lightMapIntensity;
         child.geometry.addAttribute('uv2', new THREE.BufferAttribute(uvs, 2));
       }
 
@@ -43,7 +48,7 @@ Loader.prototype = {
         // for glass
         if (child.material.map.image.src.indexOf('glass') != -1) {
           child.material.transparent = true;
-          child.material.opacity = 0.4;
+          child.material.opacity = Config.Loader.glassOpacity;
         }
       } else {
         // no texture, set colour
@@ -60,7 +65,7 @@ Loader.prototype = {
         try {
           self.materialLoader.load(filename + '.mtl', function(materials) {
             materials.preload();
-            self.objectLoader.setMaterials(materials);
+            //self.objectLoader.setMaterials(materials);
             self.objectLoader.load(filename + '.obj', function(obj){
               self.process(obj, materials);
               resolve(obj);

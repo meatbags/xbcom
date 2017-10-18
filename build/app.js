@@ -79,6 +79,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var App = {
   init: function init() {
+    // three js
     App.renderer = new THREE.WebGLRenderer();
     App.renderer.setSize(960, 540);
     App.renderer.setClearColor(0xf9e5e2, 1);
@@ -88,10 +89,15 @@ var App = {
     App.scene = new _Scene2.default(App.renderer.domElement);
 
     // events
-    window.onresize = App.resize;
+    App.bindEvents();
 
     // wait
     App.loading();
+  },
+
+  bindEvents: function bindEvents() {
+    window.onresize = App.resize;
+    App.resize();
   },
 
   resize: function resize() {
@@ -99,10 +105,9 @@ var App = {
   },
 
   loading: function loading() {
-    if (!App.scene.getStatus()) {
+    if (!App.scene.isLoaded()) {
       requestAnimationFrame(App.loading);
     } else {
-      // run
       App.time = new Date().getTime();
       App.loop();
     }
@@ -151,29 +156,44 @@ Scene.prototype = {
   init: function init() {
     var self = this;
 
+    // setup scene
     self.loader = new _Loader2.default('./assets/');
-    self.scene = new THREE.Scene();
     self.player = new _Player2.default(self.domElement);
     self.camera = self.player.camera;
+    self.scene = new THREE.Scene();
     self.collider = new Collider.System();
-    self.loaded = 0;
+    self.loadMaps();
+    self.loadLighting();
+  },
+
+  loadMaps: function loadMaps() {
+    // load maps
+
+    var self = this;
     self.toLoad = 2;
 
-    // load collision map
+    // models (async)
+    this.loader.loadOBJ('map').then(function (map) {
+      self.scene.add(map);
+      self.toLoad -= 1;
+    }, function (err) {
+      throw err;
+    });
+
+    // load collision map (async)
     self.loader.loadOBJ('collision_map').then(function (map) {
       for (var i = 0; i < map.children.length; i += 1) {
         self.collider.add(new Collider.Mesh(map.children[i].geometry));
       }
-      self.loaded += 1;
-    }, self.error);
+      self.toLoad -= 1;
+    }, function (err) {
+      throw err;
+    });
+  },
 
-    // load map
-    this.loader.loadOBJ('map').then(function (map) {
-      self.scene.add(map);
-      self.loaded += 1;
-    }, self.error);
+  loadLighting: function loadLighting() {
+    var self = this;
 
-    // lights
     self.lights = {
       p1: new THREE.PointLight(0xffffff, 1)
     };
@@ -181,12 +201,8 @@ Scene.prototype = {
     self.scene.add(self.lights.p1);
   },
 
-  error: function error(err) {
-    throw err;
-  },
-
-  getStatus: function getStatus() {
-    return self.loaded === self.toLoad;
+  isLoaded: function isLoaded() {
+    return this.toLoad <= 0;
   },
 
   update: function update(delta) {
@@ -215,26 +231,43 @@ var _Maths = __webpack_require__(3);
 
 var Maths = _interopRequireWildcard(_Maths);
 
+var _Config = __webpack_require__(5);
+
+var _Config2 = _interopRequireDefault(_Config);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 var Player = function Player(domElement) {
   this.domElement = domElement;
-  this.position = new THREE.Vector3(0, 0, 0);
+  this.position = new THREE.Vector3(_Config2.default.Player.position.x, _Config2.default.Player.position.y, _Config2.default.Player.position.z);
+  this.rotation = new THREE.Vector3(_Config2.default.Player.rotation.x, _Config2.default.Player.rotation.x, _Config2.default.Player.rotation.z);
   this.movement = new THREE.Vector3(0, 0, 0);
-  this.rotation = new THREE.Vector3(0, Math.PI, 0);
   this.offset = {
     rotation: new THREE.Vector3(0, 0, 0)
   };
   this.target = {
-    position: new THREE.Vector3(0, 0, 0),
+    position: new THREE.Vector3(_Config2.default.Player.position.x, _Config2.default.Player.position.y, _Config2.default.Player.position.z),
+    rotation: new THREE.Vector3(_Config2.default.Player.rotation.x, _Config2.default.Player.rotation.x, _Config2.default.Player.rotation.z),
     movement: new THREE.Vector3(0, 0, 0),
-    rotation: new THREE.Vector3(0, Math.PI, 0),
     offset: {
       rotation: new THREE.Vector3(0, 0, 0)
     }
   };
+  this.falling = false;
+  this.config = _Config2.default.Player;
+  this.config.physics = _Config2.default.Physics;
+  this.config.hud = _Config2.default.HUD;
+  this.config.adjust = _Config2.default.Adjust;
+
+  /*
   this.attributes = {
-    speed: 8,
+    speed: {
+      normal: Config.Player.speed.normal,
+      slowed: Config.Player.speed.slowed,
+      rotation: Config.Player.speed.
+    }
     speedWhileJumping: 4,
     height: 1.8,
     rotation: Math.PI * 0.75,
@@ -246,7 +279,7 @@ var Player = function Player(domElement) {
       slow: 0.02,
       normal: 0.05,
       fast: 0.09,
-      veryFast: 0.2
+      veryFast: 0.2,
     },
     climb: {
       up: 1,
@@ -256,18 +289,17 @@ var Player = function Player(domElement) {
     gravity: {
       accel: 10,
       maxVelocity: 50,
-      jumpVelocity: 5
+      jumpVelocity: 5,
     }
   };
-  this.outputLog = [];
-  this.camera = new THREE.PerspectiveCamera(this.attributes.fov, 1, 0.1, 10000);
+  */
+  this.camera = new THREE.PerspectiveCamera(_Config2.default.Camera.fov, _Config2.default.Camera.aspect, _Config2.default.Camera.near, _Config2.default.Camera.far);
   this.camera.up = new THREE.Vector3(0, 1, 0);
   this.init();
 };
 
 Player.prototype = {
   init: function init() {
-    this.object = new THREE.Mesh(new THREE.SphereBufferGeometry(0.05), new THREE.MeshPhongMaterial());
     this.bindControls();
     this.resizeCamera();
   },
@@ -283,6 +315,9 @@ Player.prototype = {
     var self = this;
 
     // mouse
+    self.domElement.addEventListener('click', function (e) {
+      self.handleClick(e);
+    });
     self.domElement.addEventListener('mousemove', function (e) {
       self.handleMouseMove(e);
     }, false);
@@ -306,25 +341,15 @@ Player.prototype = {
     }, false);
   },
 
-  log: function log() {
-    var text = '';
-    for (var i = 0; i < arguments.length; i += 1) {
-      text += arguments[i] + ' ';
-    }
-    this.outputLog.push(text);
-  },
-
   update: function update(delta, collider) {
     // handle key presses and move player
-
-    this.outputLog = [];
 
     // get movement vector from controls
     if (this.keys.up || this.keys.down) {
       var dir = (this.keys.up ? 1 : 0) + (this.keys.down ? -1 : 0);
       var _yaw = this.rotation.y + this.offset.rotation.y;
-      var dx = Math.sin(_yaw) * this.attributes.speed * dir;
-      var dz = Math.cos(_yaw) * this.attributes.speed * dir;
+      var dx = Math.sin(_yaw) * this.config.speed.normal * dir;
+      var dz = Math.cos(_yaw) * this.config.speed.normal * dir;
       this.target.movement.x = dx;
       this.target.movement.z = dz;
     } else {
@@ -338,7 +363,7 @@ Player.prototype = {
 
       // jump if not falling
       if (this.movement.y == 0) {
-        this.movement.y = this.attributes.gravity.jumpVelocity;
+        this.movement.y = this.config.speed.jump;
       }
     }
 
@@ -350,8 +375,8 @@ Player.prototype = {
       this.movement.x = this.target.movement.x;
       this.movement.z = this.target.movement.z;
     } else {
-      this.movement.x += (this.target.movement.x - this.movement.x) * this.attributes.adjust.slow;
-      this.movement.z += (this.target.movement.z - this.movement.z) * this.attributes.adjust.slow;
+      this.movement.x += (this.target.movement.x - this.movement.x) * this.config.adjust.slow;
+      this.movement.z += (this.target.movement.z - this.movement.z) * this.config.adjust.slow;
     }
 
     // check next position for collision
@@ -359,24 +384,21 @@ Player.prototype = {
     var collisions = collider.collisions(next);
 
     // apply gravity
-    this.movement.y = Math.max(this.movement.y - this.attributes.gravity.accel * delta, -this.attributes.gravity.maxVelocity);
+    this.movement.y = Math.max(this.movement.y - this.config.physics.gravity * delta, -this.config.physics.maxVelocity);
 
     if (collisions.length > 0) {
-      this.log('Collisions', collisions.length);
-
       // check for floor
 
       for (var i = 0; i < collisions.length; i += 1) {
         var ceiling = collisions[i].ceilingPlane(next);
 
-        if (ceiling.y != null && ceiling.plane.normal.y >= this.attributes.climb.minYNormal && ceiling.y - this.target.position.y <= this.attributes.climb.up) {
+        if (ceiling.y != null && ceiling.plane.normal.y >= this.config.climb.minPlaneYAngle && ceiling.y - this.target.position.y <= this.config.climb.up) {
           // ground
           this.movement.y = 0;
 
           // ascend
           if (ceiling.y >= next.y) {
             next.y = ceiling.y;
-            this.log('CLIMBED');
           }
         }
       }
@@ -389,7 +411,7 @@ Player.prototype = {
       for (var _i = 0; _i < collisions.length; _i += 1) {
         var _ceiling = collisions[_i].ceilingPlane(next);
 
-        if (_ceiling.y != null && (_ceiling.plane.normal.y < this.attributes.climb.minYNormal || _ceiling.y - this.target.position.y > this.attributes.climb.up)) {
+        if (_ceiling.y != null && (_ceiling.plane.normal.y < this.config.climb.minPlaneYAngle || _ceiling.y - this.target.position.y > this.config.climb.up)) {
           walls.push(collisions[_i]);
         }
       }
@@ -407,10 +429,6 @@ Player.prototype = {
         next.x = extrude.x;
         next.z = extrude.z;
 
-        // helper
-
-        this.object.position.set(next.x, next.y, next.z);
-
         // check extruded point for collisions
 
         var hits = 0;
@@ -419,7 +437,7 @@ Player.prototype = {
         for (var _i3 = 0; _i3 < collisions.length; _i3 += 1) {
           var _ceiling2 = collisions[_i3].ceilingPlane(next);
 
-          if (_ceiling2.y != null && (_ceiling2.plane.normal.y < this.attributes.climb.minYNormal || _ceiling2.y - this.target.position.y > this.attributes.climb.up)) {
+          if (_ceiling2.y != null && (_ceiling2.plane.normal.y < this.config.climb.minPlaneYAngle || _ceiling2.y - this.target.position.y > this.config.climb.up)) {
             hits += 1;
           }
         }
@@ -434,13 +452,13 @@ Player.prototype = {
     } else {
       // check if on downward slope
       var testUnder = Maths.copyVector(next);
-      testUnder.y -= this.attributes.climb.down;
+      testUnder.y -= this.config.climb.down;
 
       if (!this.falling && collider.collision(testUnder)) {
         var _ceiling3 = collider.ceilingPlane(testUnder);
 
         // snap to slope if not too steep
-        if (_ceiling3.plane.normal.y >= this.attributes.climb.minYNormal) {
+        if (_ceiling3.plane.normal.y >= this.config.climb.minPlaneYAngle) {
           next.y = _ceiling3.y;
           this.movement.y = 0;
         }
@@ -453,30 +471,33 @@ Player.prototype = {
     this.target.position.z = next.z;
 
     // smooth motion a little
-    this.position.x += (this.target.position.x - this.position.x) * this.attributes.adjust.veryFast;
-    this.position.y += (this.target.position.y - this.position.y) * this.attributes.adjust.veryFast;
-    this.position.z += (this.target.position.z - this.position.z) * this.attributes.adjust.veryFast;
+    this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
+    this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.veryFast;
+    this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
 
     // update rotation vector
     if (this.keys.left || this.keys.right) {
       var _dir = (this.keys.left ? 1 : 0) + (this.keys.right ? -1 : 0);
-      this.target.rotation.y += this.attributes.rotation * delta * _dir;
+      this.target.rotation.y += this.config.speed.rotation * delta * _dir;
     }
 
-    this.rotation.y += Maths.minAngleDifference(this.rotation.y, this.target.rotation.y) * this.attributes.adjust.fast;
-    this.offset.rotation.x += (this.target.offset.rotation.x - this.offset.rotation.x) * this.attributes.adjust.normal;
-    this.offset.rotation.y += (this.target.offset.rotation.y - this.offset.rotation.y) * this.attributes.adjust.normal;
+    this.rotation.y += Maths.minAngleDifference(this.rotation.y, this.target.rotation.y) * this.config.adjust.fast;
+    this.offset.rotation.x += (this.target.offset.rotation.x - this.offset.rotation.x) * this.config.adjust.normal;
+    this.offset.rotation.y += (this.target.offset.rotation.y - this.offset.rotation.y) * this.config.adjust.normal;
     this.rotation.y += this.rotation.y < 0 ? Maths.twoPi : this.rotation.y > Maths.twoPi ? -Maths.twoPi : 0;
 
     // set new camera position
     var yaw = this.rotation.y + this.offset.rotation.y;
     var pitch = this.rotation.x + this.offset.rotation.x;
-    var height = this.position.y + this.attributes.height;
+    var height = this.position.y + this.config.height;
 
     this.camera.position.set(this.position.x, height, this.position.z);
     this.camera.lookAt(new THREE.Vector3(this.position.x + Math.sin(yaw), height + Math.sin(pitch), this.position.z + Math.cos(yaw)));
   },
 
+  handleClick: function handleClick(e) {
+    //
+  },
   handleKeyDown: function handleKeyDown(e) {
     switch (e.keyCode) {
       case 38:
@@ -526,13 +547,13 @@ Player.prototype = {
     var bound = this.domElement.getBoundingClientRect();
     var w = this.domElement.width;
     var x = (e.clientX - bound.left) / w;
-    var t = this.attributes.cameraThreshold;
+    var t = this.config.hud.turnThreshold;
 
     // adjust camera
     if (x < t) {
-      this.target.rotation.y = this.rotation.y + (t - x) / t * this.attributes.maxRotationOffset;
+      this.target.rotation.y = this.rotation.y + (t - x) / t * this.config.hud.maxYawRotation;
     } else if (x > 1 - t) {
-      this.target.rotation.y = this.rotation.y + (x - (1 - t)) / t * -this.attributes.maxRotationOffset;
+      this.target.rotation.y = this.rotation.y + (x - (1 - t)) / t * -this.config.hud.maxYawRotation;
     } else {
       this.target.rotation.y = this.rotation.y;
     }
@@ -543,21 +564,21 @@ Player.prototype = {
     var h = this.domElement.height;
     var x = (e.clientX - bound.left) / w;
     var y = (e.clientY - bound.top) / h;
-    var t = this.attributes.cameraThreshold;
+    var t = this.config.hud.turnThreshold;
 
     // adjust camera
     if (x < t) {
-      this.target.offset.rotation.y = (t - x) / t * this.attributes.maxRotationOffset;
+      this.target.offset.rotation.y = (t - x) / t * this.config.hud.maxYawRotation;
     } else if (x > 1 - t) {
-      this.target.offset.rotation.y = (x - (1 - t)) / t * -this.attributes.maxRotationOffset;
+      this.target.offset.rotation.y = (x - (1 - t)) / t * -this.config.hud.maxYawRotation;
     } else {
       this.target.offset.rotation.y = 0;
     }
 
     if (y < t) {
-      this.target.offset.rotation.x = (t - y) / t * this.attributes.maxRotationOffset;
+      this.target.offset.rotation.x = (t - y) / t * this.config.hud.maxYawRotation;
     } else if (y > 1 - t) {
-      this.target.offset.rotation.x = (y - (1 - t)) / t * -this.attributes.maxRotationOffset;
+      this.target.offset.rotation.x = (y - (1 - t)) / t * -this.config.hud.maxYawRotation;
     } else {
       this.target.offset.rotation.x = 0;
     }
@@ -687,6 +708,13 @@ exports.normalise = normalise;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _Config = __webpack_require__(5);
+
+var _Config2 = _interopRequireDefault(_Config);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 var Loader = function Loader(basePath) {
   this.basePath = basePath;
   this.init();
@@ -707,6 +735,9 @@ Loader.prototype = {
       var child = obj.children[i];
       var meta = materials.materialsInfo[child.material.name];
 
+      // set material
+      child.material = materials.materials[child.material.name];
+
       // load lightmaps
       if (meta.map_ka) {
         var uvs = child.geometry.attributes.uv.array;
@@ -714,7 +745,7 @@ Loader.prototype = {
         var tex = new THREE.TextureLoader().load(self.basePath + src);
 
         child.material.lightMap = tex;
-        child.material.lightMapIntensity = 1;
+        child.material.lightMapIntensity = _Config2.default.Loader.lightMapIntensity;
         child.geometry.addAttribute('uv2', new THREE.BufferAttribute(uvs, 2));
       }
 
@@ -732,7 +763,7 @@ Loader.prototype = {
         // for glass
         if (child.material.map.image.src.indexOf('glass') != -1) {
           child.material.transparent = true;
-          child.material.opacity = 0.4;
+          child.material.opacity = _Config2.default.Loader.glassOpacity;
         }
       } else {
         // no texture, set colour
@@ -748,7 +779,7 @@ Loader.prototype = {
       try {
         self.materialLoader.load(filename + '.mtl', function (materials) {
           materials.preload();
-          self.objectLoader.setMaterials(materials);
+          //self.objectLoader.setMaterials(materials);
           self.objectLoader.load(filename + '.obj', function (obj) {
             self.process(obj, materials);
             resolve(obj);
@@ -762,6 +793,69 @@ Loader.prototype = {
 };
 
 exports.default = Loader;
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var Config = {
+  Loader: {
+    glassOpacity: 0.5,
+    lightMapIntensity: 1
+  },
+  Player: {
+    position: {
+      x: 0,
+      y: 0,
+      z: 0
+    },
+    rotation: {
+      x: 0,
+      y: Math.PI,
+      z: 0
+    },
+    height: 2,
+    speed: {
+      normal: 8,
+      slowed: 4,
+      rotation: Math.PI * 0.75,
+      jump: 5
+    },
+    climb: {
+      up: 1,
+      down: 0.5,
+      minPlaneYAngle: 0.5
+    }
+  },
+  HUD: {
+    turnThreshold: 0.4,
+    maxYawRotation: Math.PI * 0.3
+  },
+  Camera: {
+    fov: 58,
+    aspect: 1,
+    near: 0.1,
+    far: 10000
+  },
+  Physics: {
+    gravity: 10,
+    maxVelocity: 50
+  },
+  Adjust: {
+    slow: 0.025,
+    normal: 0.05,
+    fast: 0.09,
+    veryFast: 0.2
+  }
+};
+
+exports.default = Config;
 
 /***/ })
 /******/ ]);

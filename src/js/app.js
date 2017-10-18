@@ -3,6 +3,7 @@ import Scene from './modules/Scene';
 
 const App = {
   init: function() {
+    // three js
     App.renderer = new THREE.WebGLRenderer();
     App.renderer.setSize(960, 540);
     App.renderer.setClearColor(0xf9e5e2, 1);
@@ -12,10 +13,15 @@ const App = {
     App.scene = new Scene(App.renderer.domElement);
 
     // events
-    window.onresize = App.resize;
+    App.bindEvents();
 
     // wait
     App.loading();
+  },
+
+  bindEvents: function() {
+    window.onresize = App.resize;
+    App.resize();
   },
 
   resize: function() {
@@ -23,10 +29,9 @@ const App = {
   },
 
   loading: function() {
-    if (!App.scene.getStatus()) {
+    if (!App.scene.isLoaded()) {
       requestAnimationFrame(App.loading);
     } else {
-      // run
       App.time = (new Date()).getTime();
       App.loop();
     }
