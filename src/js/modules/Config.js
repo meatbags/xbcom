@@ -19,7 +19,7 @@ const Config = {
       normal: 8,
       slowed: 4,
       rotation: Math.PI * 0.75,
-      jump: 5,
+      jump: 6,
     },
     climb: {
       up: 1,

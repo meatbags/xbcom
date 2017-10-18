@@ -161,6 +161,7 @@ Scene.prototype = {
     self.player = new _Player2.default(self.domElement);
     self.camera = self.player.camera;
     self.scene = new THREE.Scene();
+    self.scene.add(self.player.object);
     self.collider = new Collider.System();
     self.loadMaps();
     self.loadLighting();
@@ -195,10 +196,11 @@ Scene.prototype = {
     var self = this;
 
     self.lights = {
-      p1: new THREE.PointLight(0xffffff, 1)
+      a1: new THREE.AmbientLight(0xffffff, 0.25),
+      p1: new THREE.PointLight(0xffffff, .5, 50, 1)
     };
-    self.lights.p1.position.set(0, 10, 0);
-    self.scene.add(self.lights.p1);
+    self.lights.p1.position.set(0, 20, 0);
+    self.scene.add(self.lights.a1, self.lights.p1);
   },
 
   isLoaded: function isLoaded() {
@@ -260,46 +262,17 @@ var Player = function Player(domElement) {
   this.config.physics = _Config2.default.Physics;
   this.config.hud = _Config2.default.HUD;
   this.config.adjust = _Config2.default.Adjust;
-
-  /*
-  this.attributes = {
-    speed: {
-      normal: Config.Player.speed.normal,
-      slowed: Config.Player.speed.slowed,
-      rotation: Config.Player.speed.
-    }
-    speedWhileJumping: 4,
-    height: 1.8,
-    rotation: Math.PI * 0.75,
-    fov: 58,
-    cameraThreshold: 0.4,
-    maxRotationOffset: Math.PI * 0.3,
-    falling: false,
-    adjust: {
-      slow: 0.02,
-      normal: 0.05,
-      fast: 0.09,
-      veryFast: 0.2,
-    },
-    climb: {
-      up: 1,
-      down: 0.5,
-      minYNormal: 0.5
-    },
-    gravity: {
-      accel: 10,
-      maxVelocity: 50,
-      jumpVelocity: 5,
-    }
-  };
-  */
   this.camera = new THREE.PerspectiveCamera(_Config2.default.Camera.fov, _Config2.default.Camera.aspect, _Config2.default.Camera.near, _Config2.default.Camera.far);
   this.camera.up = new THREE.Vector3(0, 1, 0);
+  this.object = new THREE.Group();
   this.init();
 };
 
 Player.prototype = {
   init: function init() {
+    this.light = new THREE.PointLight(0xffffff, 0.5, 25, 2);
+    this.light.position.set(0, 1, 0);
+    this.object.add(this.light);
     this.bindControls();
     this.resizeCamera();
   },
@@ -491,6 +464,9 @@ Player.prototype = {
 
     this.camera.position.set(this.position.x, height, this.position.z);
     this.camera.lookAt(new THREE.Vector3(this.position.x + Math.sin(yaw), height + Math.sin(pitch), this.position.z + Math.cos(yaw)));
+
+    // set world object
+    this.object.position.set(this.position.x, this.position.y, this.position.z);
   },
 
   update: function update(delta, collider) {
@@ -831,7 +807,7 @@ var Config = {
       normal: 8,
       slowed: 4,
       rotation: Math.PI * 0.75,
-      jump: 5
+      jump: 6
     },
     climb: {
       up: 1,

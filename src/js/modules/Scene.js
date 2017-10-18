@@ -15,6 +15,7 @@ Scene.prototype = {
     self.player = new Player(self.domElement);
     self.camera = self.player.camera;
     self.scene = new THREE.Scene();
+    self.scene.add(self.player.object);
     self.collider = new Collider.System();
     self.loadMaps();
     self.loadLighting();
@@ -49,10 +50,14 @@ Scene.prototype = {
     const self = this;
 
     self.lights = {
-      p1: new THREE.PointLight(0xffffff, 1)
+      a1: new THREE.AmbientLight(0xffffff, 0.25),
+      p1: new THREE.PointLight(0xffffff, .5, 50, 1)
     };
-    self.lights.p1.position.set(0, 10, 0);
-    self.scene.add(self.lights.p1);
+    self.lights.p1.position.set(0, 20, 0);
+    self.scene.add(
+      self.lights.a1,
+      self.lights.p1
+    );
   },
 
   isLoaded: function() {
