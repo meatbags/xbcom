@@ -103,10 +103,14 @@ Player.prototype = {
 		}, false);
 	},
 
-	update: function(delta, collider) {
-    // handle key presses and move player
+  handleInput: function(delta) {
+    // left/ right keys
+    if (this.keys.left || this.keys.right) {
+      const dir = ((this.keys.left) ? 1 : 0) + ((this.keys.right) ? -1 : 0);
+      this.target.rotation.y += this.config.speed.rotation * delta * dir;
+    }
 
-    // get movement vector from controls
+    // up/ down keys
     if (this.keys.up || this.keys.down) {
       const dir = ((this.keys.up) ? 1 : 0) + ((this.keys.down) ? -1 : 0);
       const yaw = this.rotation.y + this.offset.rotation.y;
@@ -119,7 +123,7 @@ Player.prototype = {
       this.target.movement.z = 0;
     }
 
-    // jump key
+    // jump
     if (this.keys.jump) {
       this.keys.jump = false;
 
@@ -140,7 +144,9 @@ Player.prototype = {
       this.movement.x += (this.target.movement.x - this.movement.x) * this.config.adjust.slow;
       this.movement.z += (this.target.movement.z - this.movement.z) * this.config.adjust.slow;
     }
+  },
 
+  checkCollisions: function(delta, collider) {
     // check next position for collision
     let next = Maths.addVector(Maths.scaleVector(this.movement, delta), this.target.position);
     let collisions = collider.collisions(next);
@@ -150,7 +156,6 @@ Player.prototype = {
 
     if (collisions.length > 0) {
       // check for floor
-
       for (let i=0; i<collisions.length; i+=1) {
         const ceiling = collisions[i].ceilingPlane(next);
 
@@ -170,15 +175,13 @@ Player.prototype = {
       }
 
       // check for walls
-
       collisions = collider.collisions(next);
       let walls = [];
 
       for (let i=0; i<collisions.length; i+=1) {
         const ceiling = collisions[i].ceilingPlane(next);
 
-        if (
-          ceiling.y != null && (
+        if (ceiling.y != null && (
           ceiling.plane.normal.y < this.config.climb.minPlaneYAngle ||
           (ceiling.y - this.target.position.y) > this.config.climb.up)
         ){
@@ -187,7 +190,6 @@ Player.prototype = {
       }
 
       // if inside a wall, extrude out
-
       if (walls.length > 0) {
         let extrude = Maths.copyVector(next);
 
@@ -200,7 +202,6 @@ Player.prototype = {
         next.z = extrude.z;
 
         // check extruded point for collisions
-
         let hits = 0;
         collisions = collider.collisions(next);
 
@@ -217,7 +218,6 @@ Player.prototype = {
         }
 
         // if contact with > 1 walls, stop motion
-
         if (hits > 1) {
           next.x = this.target.position.x;
           next.z = this.target.position.z;
@@ -243,24 +243,21 @@ Player.prototype = {
     this.target.position.x = next.x;
     this.target.position.y = next.y;
     this.target.position.z = next.z;
+  },
 
-    // smooth motion a little
+  move: function() {
+    // move
     this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
     this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.veryFast;
     this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
 
-    // update rotation vector
-    if (this.keys.left || this.keys.right) {
-      const dir = ((this.keys.left) ? 1 : 0) + ((this.keys.right) ? -1 : 0);
-      this.target.rotation.y += this.config.speed.rotation * delta * dir;
-    }
-
+    // rotate
     this.rotation.y += Maths.minAngleDifference(this.rotation.y, this.target.rotation.y) * this.config.adjust.fast;
     this.offset.rotation.x += (this.target.offset.rotation.x - this.offset.rotation.x) * this.config.adjust.normal;
     this.offset.rotation.y += (this.target.offset.rotation.y - this.offset.rotation.y) * this.config.adjust.normal;
     this.rotation.y += (this.rotation.y < 0) ? Maths.twoPi : ((this.rotation.y > Maths.twoPi) ? -Maths.twoPi : 0);
 
-    // set new camera position
+    // set camera
     const yaw = this.rotation.y + this.offset.rotation.y;
     const pitch = this.rotation.x + this.offset.rotation.x;
     const height = this.position.y + this.config.height;
@@ -270,11 +267,19 @@ Player.prototype = {
       this.position.x + Math.sin(yaw),
       height + Math.sin(pitch),
       this.position.z + Math.cos(yaw)
-    ))
+    ));
+  },
+
+	update: function(delta, collider) {
+    // handle key presses and move player
+
+    this.handleInput(delta);
+    this.checkCollisions(delta, collider);
+    this.move();
 	},
 
   handleClick(e) {
-    //
+    // on click
   },
 
   handleKeyDown(e) {
