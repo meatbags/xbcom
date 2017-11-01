@@ -23,6 +23,8 @@ Loader.prototype = {
       // set material
       child.material = materials.materials[child.material.name];
 
+      console.log(meta);
+
       // load lightmaps
       if (meta.map_ka) {
         const uvs = child.geometry.attributes.uv.array;

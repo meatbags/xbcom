@@ -77,7 +77,7 @@ Object.defineProperty(exports, "__esModule", {
 var Config = {
   Global: {
     fogColour: 0xf9e5e2,
-    fogDensity: 0.018,
+    fogDensity: 0.010,
     timeDeltaMax: 0.05
   },
   Loader: {
@@ -86,16 +86,16 @@ var Config = {
   },
   Area: {
     collision: {
-      min: -125,
-      max: 125
+      min: -250,
+      max: 250
     },
     walk: {
       min: 0,
-      max: 250
+      max: 500
     }
   },
   Player: {
-    height: 2,
+    height: 1.5,
     position: {
       x: 0,
       y: 0,
@@ -103,13 +103,13 @@ var Config = {
     },
     rotation: {
       pitch: 0,
-      yaw: 0,
+      yaw: Math.PI * 0.3,
       roll: 0,
       maxPitch: Math.PI * 0.25,
       minPitch: Math.PI * -0.25
     },
     speed: {
-      normal: 8,
+      normal: 6,
       slowed: 4,
       rotation: Math.PI * 0.75,
       jump: 6
@@ -122,14 +122,14 @@ var Config = {
   },
   Ship: {
     position: {
-      x: 0,
-      y: 20,
-      z: 0
+      x: 250,
+      y: 30,
+      z: 250
     },
-    speed: 15,
+    speed: 20,
     rotation: {
       pitch: 0,
-      yaw: Math.PI * 0.3
+      yaw: 0
     }
   },
   HUD: {
@@ -147,6 +147,7 @@ var Config = {
     maxVelocity: 50
   },
   Adjust: {
+    verySlow: 0.01,
     slow: 0.025,
     normal: 0.05,
     fast: 0.09,
@@ -176,8 +177,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var App = {
   init: function init() {
     // three js
-    App.renderer = new THREE.WebGLRenderer();
-    App.renderer.setSize(960, 540);
+    App.renderer = new THREE.WebGLRenderer({ antialias: false });
     App.renderer.setClearColor(_Config2.default.Global.fogColour, 1);
     document.getElementById('wrapper').appendChild(App.renderer.domElement);
 
@@ -197,6 +197,12 @@ var App = {
   },
 
   resize: function resize() {
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+
+    App.renderer.setSize(w, h);
+    App.renderer.domElement.width = w;
+    App.renderer.domElement.height = h;
     App.scene.resize();
   },
 
@@ -269,6 +275,10 @@ Scene.prototype = {
     self.loadLighting();
   },
 
+  resize: function resize() {
+    this.player.resizeCamera();
+  },
+
   loadMaps: function loadMaps() {
     // load maps
 
@@ -306,7 +316,7 @@ Scene.prototype = {
     // lighting
     self.lights = {
       a1: new THREE.AmbientLight(0xffffff, 0.25),
-      d1: new THREE.DirectionalLight(0xffffff, 1),
+      d1: new THREE.DirectionalLight(0xffffff, 0.5),
       p1: new THREE.PointLight(0xffffff, .5, 50, 1)
     };
     self.lights.p1.position.set(0, 20, 0);
@@ -326,9 +336,7 @@ Scene.prototype = {
     var self = this;
 
     self.player.update(delta, self.collider);
-  },
-
-  resize: function resize() {}
+  }
 };
 
 exports.default = Scene;
@@ -571,7 +579,7 @@ Player.prototype = {
 
     // move
     this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
-    this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.veryFast;
+    this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.fast;
     this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
 
     // rotate
@@ -596,6 +604,7 @@ Player.prototype = {
   update: function update(delta, collider) {
     if (this.ship.active) {
       this.handleInput(delta);
+      this.ship.target.rotation.yaw = this.rotation.yaw;
       this.ship.update(delta, collider);
       this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
       this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
@@ -670,7 +679,7 @@ Player.prototype = {
     }
   },
   handleMouseMove: function handleMouseMove(e) {
-    if (this.mouse.active) {
+    if (this.mouse.active && !(this.keys.left || this.keys.right)) {
       var bound = this.domElement.getBoundingClientRect();
 
       this.mouse.x = e.clientX / this.domElement.width * 2 - 1;
@@ -928,6 +937,8 @@ Loader.prototype = {
       // set material
       child.material = materials.materials[child.material.name];
 
+      console.log(meta);
+
       // load lightmaps
       if (meta.map_ka) {
         var uvs = child.geometry.attributes.uv.array;
@@ -1025,6 +1036,9 @@ var Ship = function Ship() {
 
 Ship.prototype = {
   update: function update(delta, collider) {
+    // rotate
+    this.rotation.yaw += this.config.adjust.slow * (0, _Maths.minAngleDifference)(this.rotation.yaw, this.target.rotation.yaw);
+
     // move target
     this.target.position.x += this.speed * Math.sin(this.rotation.yaw) * delta;
     this.target.position.z += this.speed * Math.cos(this.rotation.yaw) * delta;

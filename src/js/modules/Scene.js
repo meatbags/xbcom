@@ -24,6 +24,10 @@ Scene.prototype = {
     self.loadLighting();
   },
 
+  resize: function() {
+    this.player.resizeCamera();
+  },
+
   loadMaps: function() {
     // load maps
 
@@ -61,7 +65,7 @@ Scene.prototype = {
     // lighting
     self.lights = {
       a1: new THREE.AmbientLight(0xffffff, 0.25),
-      d1: new THREE.DirectionalLight(0xffffff, 1),
+      d1: new THREE.DirectionalLight(0xffffff, 0.5),
       p1: new THREE.PointLight(0xffffff, .5, 50, 1)
     };
     self.lights.p1.position.set(0, 20, 0);
@@ -84,10 +88,6 @@ Scene.prototype = {
 
     self.player.update(delta, self.collider);
   },
-
-  resize: function() {
-
-  }
 };
 
 export default Scene;

@@ -224,7 +224,7 @@ Player.prototype = {
 
     // move
     this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
-    this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.veryFast;
+    this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.fast;
     this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
 
     // rotate
@@ -253,6 +253,7 @@ Player.prototype = {
 	update: function(delta, collider) {
     if (this.ship.active) {
       this.handleInput(delta);
+      this.ship.target.rotation.yaw = this.rotation.yaw;
       this.ship.update(delta, collider);
       this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
       this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
@@ -330,7 +331,7 @@ Player.prototype = {
   },
 
   handleMouseMove(e) {
-    if (this.mouse.active) {
+    if (this.mouse.active && !(this.keys.left || this.keys.right)) {
       const bound = this.domElement.getBoundingClientRect();
 
       this.mouse.x = (e.clientX / this.domElement.width) * 2 - 1;

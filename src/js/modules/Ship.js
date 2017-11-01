@@ -1,5 +1,5 @@
 import Config from './Config';
-import { wrap } from './Maths';
+import { wrap, minAngleDifference } from './Maths';
 
 const Ship = function() {
   this.active = true;
@@ -23,6 +23,9 @@ const Ship = function() {
 
 Ship.prototype = {
   update: function(delta, collider) {
+    // rotate
+    this.rotation.yaw += this.config.adjust.slow * minAngleDifference(this.rotation.yaw, this.target.rotation.yaw)
+
     // move target
     this.target.position.x += this.speed * Math.sin(this.rotation.yaw) * delta;
     this.target.position.z += this.speed * Math.cos(this.rotation.yaw) * delta;
