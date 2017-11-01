@@ -24,7 +24,7 @@ illum 4
 Kd 0.00 0.00 0.00
 Ka 0.00 0.00 0.00
 Tf 1.00 1.00 1.00
-map_Kd surface_normal.jpg
+map_Kd surface_blurred_edge.jpg
 Ni 1.00
 newmtl lambert7SG
 illum 4
@@ -32,12 +32,6 @@ Kd 0.00 0.00 0.00
 Ka 0.00 0.00 0.00
 Tf 1.00 1.00 1.00
 map_Kd block2.jpg
-Ni 1.00
-newmtl lambert8SG
-illum 4
-Kd 0.50 0.50 0.50
-Ka 0.00 0.00 0.00
-Tf 1.00 1.00 1.00
 Ni 1.00
 newmtl lambert11SG
 illum 4
@@ -53,3 +47,18 @@ Ka 0.00 0.00 0.00
 Tf 1.00 1.00 1.00
 map_Kd baked-lambert12SG-polySurface42.jpg
 Ni 1.00
+newmtl lambert13SG
+illum 4
+Kd 1.00 1.00 1.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl phong1SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd baked-phong1SG-polySurface69.jpg
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
