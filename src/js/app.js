@@ -1,12 +1,12 @@
-
 import Scene from './modules/Scene';
+import Config from './modules/Config';
 
 const App = {
   init: function() {
     // three js
     App.renderer = new THREE.WebGLRenderer();
     App.renderer.setSize(960, 540);
-    App.renderer.setClearColor(0xf9e5e2, 1);
+    App.renderer.setClearColor(Config.Global.fogColour, 1);
     document.getElementById('wrapper').appendChild(App.renderer.domElement);
 
     // scene

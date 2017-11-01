@@ -1,4 +1,5 @@
 import * as Maths from './Maths';
+import Ship from './Ship';
 import Config from './Config';
 
 const Player = function(domElement) {
@@ -47,71 +48,9 @@ Player.prototype = {
     this.light = new THREE.PointLight(0xffffff, 0.5, 25, 2);
     this.light.position.set(0, 1, 0);
     this.object.add(this.light);
+    this.ship = new Ship;
 		this.bindControls();
     this.resizeCamera();
-	},
-
-  resizeCamera: function() {
-    const w = this.domElement.width;
-    const h = this.domElement.height;
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
-  },
-
-	bindControls: function() {
-		const self = this;
-
-    // keys
-    self.keys = {
-			up: false,
-			down: false,
-			left: false,
-			right: false,
-      jump: false
-		};
-    self.mouse = {
-      x: 0,
-      y: 0,
-      start: {
-        x: 0,
-        y: 0
-      },
-      delta: {
-        x: 0,
-        y: 0
-      },
-      rotation: {
-        pitch: 0,
-        yaw: 0
-      },
-      locked: false,
-      active: false
-    };
-
-    // mouse
-    self.domElement.addEventListener('click', function(e){
-    //  console.log(self)
-    }, false);
-    self.domElement.addEventListener('mousedown', function(e){
-      self.handleMouseDown(e);
-    }, false);
-    self.domElement.addEventListener('mousemove', function(e){
-      self.handleMouseMove(e);
-    }, false);
-    self.domElement.addEventListener('mouseup', function(e){
-      self.handleMouseUp(e);
-    }, false);
-    self.domElement.addEventListener('mouseleave', function(e){
-      self.handleMouseUp(e);
-    }, false);
-
-    // keyboard
-		document.addEventListener('keydown', function(e) {
-      self.handleKeyDown(e);
-    }, false);
-		document.addEventListener('keyup', function(e) {
-      self.handleKeyUp(e);
-		}, false);
 	},
 
   handleInput: function(delta) {
@@ -306,11 +245,17 @@ Player.prototype = {
   },
 
 	update: function(delta, collider) {
-    // handle key presses and move player
-
-    this.handleInput(delta);
-    this.checkCollisions(delta, collider);
-    this.move();
+    if (this.ship.active) {
+      this.ship.update(delta, collider);
+      this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
+      this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
+      this.move();
+    } else {
+      // handle key presses and move player
+      this.handleInput(delta);
+      this.checkCollisions(delta, collider);
+      this.move();
+    }
 	},
 
   handleKeyDown(e) {
@@ -407,7 +352,70 @@ Player.prototype = {
 
   handleMouseUp(e) {
     this.mouse.active = false;
-  }
+  },
+
+  resizeCamera: function() {
+    const w = this.domElement.width;
+    const h = this.domElement.height;
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+  },
+
+	bindControls: function() {
+		const self = this;
+
+    // keys
+    self.keys = {
+			up: false,
+			down: false,
+			left: false,
+			right: false,
+      jump: false
+		};
+    self.mouse = {
+      x: 0,
+      y: 0,
+      start: {
+        x: 0,
+        y: 0
+      },
+      delta: {
+        x: 0,
+        y: 0
+      },
+      rotation: {
+        pitch: 0,
+        yaw: 0
+      },
+      locked: false,
+      active: false
+    };
+
+    // mouse
+    self.domElement.addEventListener('click', function(e){
+    //  console.log(self)
+    }, false);
+    self.domElement.addEventListener('mousedown', function(e){
+      self.handleMouseDown(e);
+    }, false);
+    self.domElement.addEventListener('mousemove', function(e){
+      self.handleMouseMove(e);
+    }, false);
+    self.domElement.addEventListener('mouseup', function(e){
+      self.handleMouseUp(e);
+    }, false);
+    self.domElement.addEventListener('mouseleave', function(e){
+      self.handleMouseUp(e);
+    }, false);
+
+    // keyboard
+		document.addEventListener('keydown', function(e) {
+      self.handleKeyDown(e);
+    }, false);
+		document.addEventListener('keyup', function(e) {
+      self.handleKeyUp(e);
+		}, false);
+	}
 };
 
 export default Player;

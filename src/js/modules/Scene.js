@@ -1,5 +1,6 @@
 import Player from './Player';
 import Loader from './Loader';
+import Config from './Config';
 
 const Scene = function(domElement) {
   this.domElement = domElement;
@@ -17,6 +18,8 @@ Scene.prototype = {
     self.scene = new THREE.Scene();
     self.scene.add(self.player.object);
     self.collider = new Collider.System();
+
+    // load stuff
     self.loadMaps();
     self.loadLighting();
   },
@@ -55,6 +58,7 @@ Scene.prototype = {
   loadLighting: function() {
     const self = this;
 
+    // lighting
     self.lights = {
       a1: new THREE.AmbientLight(0xffffff, 0.25),
       d1: new THREE.DirectionalLight(0xffffff, 1),
@@ -66,6 +70,9 @@ Scene.prototype = {
       self.lights.d1
       //self.lights.p1
     );
+
+    // fog
+    self.scene.fog = new THREE.FogExp2(Config.Global.fogColour, 0.015);
   },
 
   isLoaded: function() {

@@ -75,6 +75,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 var Config = {
+  Global: {
+    fogColour: 0xf9e5e2
+  },
   Loader: {
     glassOpacity: 0.5,
     lightMapIntensity: 1
@@ -90,7 +93,7 @@ var Config = {
     }
   },
   Player: {
-    height: 15,
+    height: 2,
     position: {
       x: 0,
       y: 0,
@@ -98,7 +101,7 @@ var Config = {
     },
     rotation: {
       pitch: 0,
-      yaw: Math.PI,
+      yaw: 0,
       roll: 0,
       maxPitch: Math.PI * 0.25,
       minPitch: Math.PI * -0.25
@@ -118,8 +121,13 @@ var Config = {
   Ship: {
     position: {
       x: 0,
-      y: 0,
+      y: 10,
       z: 0
+    },
+    speed: 20,
+    rotation: {
+      pitch: 0,
+      yaw: Math.PI * 0.3
     }
   },
   HUD: {
@@ -157,6 +165,10 @@ var _Scene = __webpack_require__(2);
 
 var _Scene2 = _interopRequireDefault(_Scene);
 
+var _Config = __webpack_require__(0);
+
+var _Config2 = _interopRequireDefault(_Config);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var App = {
@@ -164,7 +176,7 @@ var App = {
     // three js
     App.renderer = new THREE.WebGLRenderer();
     App.renderer.setSize(960, 540);
-    App.renderer.setClearColor(0xf9e5e2, 1);
+    App.renderer.setClearColor(_Config2.default.Global.fogColour, 1);
     document.getElementById('wrapper').appendChild(App.renderer.domElement);
 
     // scene
@@ -227,6 +239,10 @@ var _Loader = __webpack_require__(5);
 
 var _Loader2 = _interopRequireDefault(_Loader);
 
+var _Config = __webpack_require__(0);
+
+var _Config2 = _interopRequireDefault(_Config);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Scene = function Scene(domElement) {
@@ -245,6 +261,8 @@ Scene.prototype = {
     self.scene = new THREE.Scene();
     self.scene.add(self.player.object);
     self.collider = new Collider.System();
+
+    // load stuff
     self.loadMaps();
     self.loadLighting();
   },
@@ -283,6 +301,7 @@ Scene.prototype = {
   loadLighting: function loadLighting() {
     var self = this;
 
+    // lighting
     self.lights = {
       a1: new THREE.AmbientLight(0xffffff, 0.25),
       d1: new THREE.DirectionalLight(0xffffff, 1),
@@ -292,6 +311,9 @@ Scene.prototype = {
     self.scene.add(self.lights.a1, self.lights.d1
     //self.lights.p1
     );
+
+    // fog
+    self.scene.fog = new THREE.FogExp2(_Config2.default.Global.fogColour, 0.015);
   },
 
   isLoaded: function isLoaded() {
@@ -323,6 +345,10 @@ Object.defineProperty(exports, "__esModule", {
 var _Maths = __webpack_require__(4);
 
 var Maths = _interopRequireWildcard(_Maths);
+
+var _Ship = __webpack_require__(6);
+
+var _Ship2 = _interopRequireDefault(_Ship);
 
 var _Config = __webpack_require__(0);
 
@@ -378,71 +404,9 @@ Player.prototype = {
     this.light = new THREE.PointLight(0xffffff, 0.5, 25, 2);
     this.light.position.set(0, 1, 0);
     this.object.add(this.light);
+    this.ship = new _Ship2.default();
     this.bindControls();
     this.resizeCamera();
-  },
-
-  resizeCamera: function resizeCamera() {
-    var w = this.domElement.width;
-    var h = this.domElement.height;
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
-  },
-
-  bindControls: function bindControls() {
-    var self = this;
-
-    // keys
-    self.keys = {
-      up: false,
-      down: false,
-      left: false,
-      right: false,
-      jump: false
-    };
-    self.mouse = {
-      x: 0,
-      y: 0,
-      start: {
-        x: 0,
-        y: 0
-      },
-      delta: {
-        x: 0,
-        y: 0
-      },
-      rotation: {
-        pitch: 0,
-        yaw: 0
-      },
-      locked: false,
-      active: false
-    };
-
-    // mouse
-    self.domElement.addEventListener('click', function (e) {
-      //  console.log(self)
-    }, false);
-    self.domElement.addEventListener('mousedown', function (e) {
-      self.handleMouseDown(e);
-    }, false);
-    self.domElement.addEventListener('mousemove', function (e) {
-      self.handleMouseMove(e);
-    }, false);
-    self.domElement.addEventListener('mouseup', function (e) {
-      self.handleMouseUp(e);
-    }, false);
-    self.domElement.addEventListener('mouseleave', function (e) {
-      self.handleMouseUp(e);
-    }, false);
-
-    // keyboard
-    document.addEventListener('keydown', function (e) {
-      self.handleKeyDown(e);
-    }, false);
-    document.addEventListener('keyup', function (e) {
-      self.handleKeyUp(e);
-    }, false);
   },
 
   handleInput: function handleInput(delta) {
@@ -622,11 +586,17 @@ Player.prototype = {
   },
 
   update: function update(delta, collider) {
-    // handle key presses and move player
-
-    this.handleInput(delta);
-    this.checkCollisions(delta, collider);
-    this.move();
+    if (this.ship.active) {
+      this.ship.update(delta, collider);
+      this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
+      this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
+      this.move();
+    } else {
+      // handle key presses and move player
+      this.handleInput(delta);
+      this.checkCollisions(delta, collider);
+      this.move();
+    }
   },
 
   handleKeyDown: function handleKeyDown(e) {
@@ -713,6 +683,70 @@ Player.prototype = {
   },
   handleMouseUp: function handleMouseUp(e) {
     this.mouse.active = false;
+  },
+
+
+  resizeCamera: function resizeCamera() {
+    var w = this.domElement.width;
+    var h = this.domElement.height;
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+  },
+
+  bindControls: function bindControls() {
+    var self = this;
+
+    // keys
+    self.keys = {
+      up: false,
+      down: false,
+      left: false,
+      right: false,
+      jump: false
+    };
+    self.mouse = {
+      x: 0,
+      y: 0,
+      start: {
+        x: 0,
+        y: 0
+      },
+      delta: {
+        x: 0,
+        y: 0
+      },
+      rotation: {
+        pitch: 0,
+        yaw: 0
+      },
+      locked: false,
+      active: false
+    };
+
+    // mouse
+    self.domElement.addEventListener('click', function (e) {
+      //  console.log(self)
+    }, false);
+    self.domElement.addEventListener('mousedown', function (e) {
+      self.handleMouseDown(e);
+    }, false);
+    self.domElement.addEventListener('mousemove', function (e) {
+      self.handleMouseMove(e);
+    }, false);
+    self.domElement.addEventListener('mouseup', function (e) {
+      self.handleMouseUp(e);
+    }, false);
+    self.domElement.addEventListener('mouseleave', function (e) {
+      self.handleMouseUp(e);
+    }, false);
+
+    // keyboard
+    document.addEventListener('keydown', function (e) {
+      self.handleKeyDown(e);
+    }, false);
+    document.addEventListener('keyup', function (e) {
+      self.handleKeyUp(e);
+    }, false);
   }
 };
 
@@ -935,6 +969,68 @@ Loader.prototype = {
 };
 
 exports.default = Loader;
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _Config = __webpack_require__(0);
+
+var _Config2 = _interopRequireDefault(_Config);
+
+var _Maths = __webpack_require__(4);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var Ship = function Ship() {
+  this.active = true;
+  this.position = new THREE.Vector3(_Config2.default.Ship.position.x, _Config2.default.Ship.position.y, _Config2.default.Ship.position.z);
+  this.rotation = {
+    pitch: _Config2.default.Ship.rotation.pitch,
+    yaw: _Config2.default.Ship.rotation.yaw
+  };
+  this.target = {
+    position: new THREE.Vector3(_Config2.default.Ship.position.x, _Config2.default.Ship.position.y, _Config2.default.Ship.position.z),
+    rotation: {
+      pitch: _Config2.default.Ship.rotation.pitch,
+      yaw: _Config2.default.Ship.rotation.yaw
+    }
+  };
+  this.speed = _Config2.default.Ship.speed;
+  this.config = _Config2.default.Ship;
+  this.config.area = _Config2.default.Area;
+  this.config.adjust = _Config2.default.Adjust;
+};
+
+Ship.prototype = {
+  update: function update(delta, collider) {
+    // move target
+    this.target.position.x += this.speed * Math.sin(this.rotation.yaw) * delta;
+    this.target.position.z += this.speed * Math.cos(this.rotation.yaw) * delta;
+
+    // wrap
+    var wrapx = (0, _Maths.wrap)(this.target.position.x, this.config.area.walk.min, this.config.area.walk.max);
+    var wrapz = (0, _Maths.wrap)(this.target.position.z, this.config.area.walk.min, this.config.area.walk.max);
+    this.position.x = wrapx + (this.position.x - this.target.position.x);
+    this.position.z = wrapz + (this.position.z - this.target.position.z);
+    this.target.position.x = wrapx;
+    this.target.position.z = wrapz;
+
+    // move
+    this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
+    this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.veryFast;
+    this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
+  }
+};
+
+exports.default = Ship;
 
 /***/ })
 /******/ ]);

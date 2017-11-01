@@ -1,4 +1,7 @@
 const Config = {
+  Global: {
+    fogColour: 0xf9e5e2,
+  },
   Loader: {
     glassOpacity: 0.5,
     lightMapIntensity: 1,
@@ -14,7 +17,7 @@ const Config = {
     }
   },
   Player: {
-    height: 15,
+    height: 2,
     position: {
       x: 0,
       y: 0,
@@ -22,7 +25,7 @@ const Config = {
     },
     rotation: {
       pitch: 0,
-      yaw: Math.PI,
+      yaw: 0,
       roll: 0,
       maxPitch: Math.PI * 0.25,
       minPitch: Math.PI * -0.25
@@ -42,8 +45,13 @@ const Config = {
   Ship: {
     position: {
       x: 0,
-      y: 0,
+      y: 10,
       z: 0
+    },
+    speed: 20,
+    rotation: {
+      pitch: 0,
+      yaw: Math.PI * 0.3
     }
   },
   HUD: {
