@@ -3,7 +3,18 @@ const Config = {
     glassOpacity: 0.5,
     lightMapIntensity: 1,
   },
+  Area: {
+    collision: {
+      min: -50,
+      max: 50,
+    },
+    walk: {
+      min: 0,
+      max: 100,
+    }
+  },
   Player: {
+    height: 15,
     position: {
       x: 0,
       y: 0,
@@ -13,10 +24,11 @@ const Config = {
       pitch: 0,
       yaw: Math.PI,
       roll: 0,
+      maxPitch: Math.PI * 0.25,
+      minPitch: Math.PI * -0.25
     },
-    height: 2,
     speed: {
-      normal: 8,
+      normal: 20, //8
       slowed: 4,
       rotation: Math.PI * 0.75,
       jump: 6,
@@ -26,6 +38,13 @@ const Config = {
       down: 0.5,
       minPlaneYAngle: 0.5,
     },
+  },
+  Ship: {
+    position: {
+      x: 0,
+      y: 0,
+      z: 0
+    }
   },
   HUD: {
     turnThreshold: 0.4,

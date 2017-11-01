@@ -5,19 +5,22 @@ const Player = function(domElement) {
   this.domElement = domElement;
   this.position = new THREE.Vector3(Config.Player.position.x, Config.Player.position.y, Config.Player.position.z);
   this.rotation = {
-    pitch: Config.Player.pitch,
-    yaw: Config.Player.yaw,
-    roll: Config.Player.roll
+    pitch: Config.Player.rotation.pitch,
+    yaw: Config.Player.rotation.yaw,
+    roll: Config.Player.rotation.roll
   };
   this.movement = new THREE.Vector3(0, 0, 0);
   this.offset = {
-    rotation: new THREE.Vector3(0, 0, 0)
+    rotation: {
+      pitch: 0,
+      yaw: 0,
+    }
   };
   this.target = {
     position: new THREE.Vector3(Config.Player.position.x, Config.Player.position.y, Config.Player.position.z),
     rotation: {
-      pitch: Config.Player.pitch,
-      yaw: Config.Player.yaw
+      pitch: Config.Player.rotation.pitch,
+      yaw: Config.Player.rotation.yaw
     },
     movement: new THREE.Vector3(0, 0, 0),
     offset: {
@@ -32,6 +35,7 @@ const Player = function(domElement) {
   this.config.physics = Config.Physics;
   this.config.hud = Config.HUD;
   this.config.adjust = Config.Adjust;
+  this.config.area = Config.Area;
   this.camera = new THREE.PerspectiveCamera(Config.Camera.fov, Config.Camera.aspect, Config.Camera.near, Config.Camera.far);
   this.camera.up = new THREE.Vector3(0, 1, 0);
   this.object = new THREE.Group();
@@ -77,29 +81,35 @@ Player.prototype = {
         y: 0
       },
       rotation: {
-        x: 0,
-        y: 0
+        pitch: 0,
+        yaw: 0
       },
       locked: false,
       active: false
     };
 
     // mouse
-    self.domElement.addEventListener('mousemove', function(e){
-      self.handleMouseMove(e);
+    self.domElement.addEventListener('click', function(e){
+    //  console.log(self)
     }, false);
     self.domElement.addEventListener('mousedown', function(e){
       self.handleMouseDown(e);
     }, false);
     self.domElement.addEventListener('mousemove', function(e){
+      self.handleMouseMove(e);
+    }, false);
+    self.domElement.addEventListener('mouseup', function(e){
+      self.handleMouseUp(e);
+    }, false);
+    self.domElement.addEventListener('mouseleave', function(e){
       self.handleMouseUp(e);
     }, false);
 
     // keyboard
-		document.addEventListener("keydown", function(e) {
+		document.addEventListener('keydown', function(e) {
       self.handleKeyDown(e);
     }, false);
-		document.addEventListener("keyup", function(e) {
+		document.addEventListener('keyup', function(e) {
       self.handleKeyUp(e);
 		}, false);
 	},
@@ -108,13 +118,13 @@ Player.prototype = {
     // left/ right keys
     if (this.keys.left || this.keys.right) {
       const dir = ((this.keys.left) ? 1 : 0) + ((this.keys.right) ? -1 : 0);
-      this.target.rotation.y += this.config.speed.rotation * delta * dir;
+      this.target.rotation.yaw += this.config.speed.rotation * delta * dir;
     }
 
     // up/ down keys
     if (this.keys.up || this.keys.down) {
       const dir = ((this.keys.up) ? 1 : 0) + ((this.keys.down) ? -1 : 0);
-      const yaw = this.rotation.y + this.offset.rotation.y;
+      const yaw = this.rotation.yaw + this.offset.rotation.yaw;
       const dx = Math.sin(yaw) * this.config.speed.normal * dir;
       const dz = Math.cos(yaw) * this.config.speed.normal * dir;
       this.target.movement.x = dx;
@@ -150,6 +160,14 @@ Player.prototype = {
   checkCollisions: function(delta, collider) {
     // check next position for collision
     let next = Maths.addVector(Maths.scaleVector(this.movement, delta), this.target.position);
+
+    // wrap collisions inside collision area
+    const wrapx = Maths.wrap(next.x, this.config.area.collision.min, this.config.area.collision.max) - next.x;
+    const wrapz = Maths.wrap(next.z, this.config.area.collision.min, this.config.area.collision.max) - next.z;
+    next.x += wrapx;
+    next.z += wrapz;
+
+    // get collision map
     let collisions = collider.collisions(next);
 
     // apply gravity
@@ -240,13 +258,25 @@ Player.prototype = {
       }
     }
 
-    // set new position target
+    // unwrap
+    next.x -= wrapx;
+    next.z -= wrapz;
+
+    // set new target position
     this.target.position.x = next.x;
     this.target.position.y = next.y;
     this.target.position.z = next.z;
   },
 
   move: function() {
+    // wrap inside play area
+    const wrapx = Maths.wrap(this.target.position.x, this.config.area.walk.min, this.config.area.walk.max);
+    const wrapz = Maths.wrap(this.target.position.z, this.config.area.walk.min, this.config.area.walk.max);
+    this.position.x = wrapx + (this.position.x - this.target.position.x);
+    this.position.z = wrapz + (this.position.z - this.target.position.z);
+    this.target.position.x = wrapx;
+    this.target.position.z = wrapz;
+
     // move
     this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
     this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.veryFast;
@@ -254,9 +284,10 @@ Player.prototype = {
 
     // rotate
     this.rotation.yaw += Maths.minAngleDifference(this.rotation.yaw, this.target.rotation.yaw) * this.config.adjust.fast;
-    this.offset.rotation.pitch += (this.target.offset.rotation.pitch - this.offset.rotation.pitch) * this.config.adjust.normal;
     this.offset.rotation.yaw += (this.target.offset.rotation.yaw - this.offset.rotation.yaw) * this.config.adjust.normal;
     this.rotation.yaw += (this.rotation.yaw < 0) ? Maths.twoPi : ((this.rotation.yaw > Maths.twoPi) ? -Maths.twoPi : 0);
+    this.rotation.pitch += (this.target.rotation.pitch - this.rotation.pitch) * this.config.adjust.normal;
+    this.offset.rotation.pitch += (this.target.offset.rotation.pitch - this.offset.rotation.pitch) * this.config.adjust.normal;
 
     // set camera
     const pitch = this.rotation.pitch + this.offset.rotation.pitch;
@@ -335,8 +366,8 @@ Player.prototype = {
       const bound = this.domElement.getBoundingClientRect();
 
       this.mouse.active = true;
-      this.mouse.rotation.x = this.rotation.x;
-      this.mouse.rotation.y = this.rotation.y;
+      this.mouse.rotation.pitch = this.rotation.pitch;
+      this.mouse.rotation.yaw = this.rotation.yaw;
       this.mouse.start.x = (e.clientX / this.domElement.width) * 2 - 1;
       this.mouse.start.y = ((e.clientY - bound.y) / this.domElement.height) * 2 - 1;
     }
@@ -352,27 +383,29 @@ Player.prototype = {
       this.mouse.delta.y = this.mouse.y - this.mouse.start.y;
 
       // target rotation yaw
-      this.target.rotation.y = this.mouse.rotation.y + this.mouse.delta.x * 1;
+      this.target.rotation.yaw = this.mouse.rotation.yaw + this.mouse.delta.x;
 
       // target rotation pitch
-      let pitch = this.mouse.rotation.x + this.mouse.delta.y * 0.75;
+      let pitch = this.mouse.rotation.pitch + this.mouse.delta.y;
 
       // if limit reached, reset start point
-      if (pitch > this.attributes.maxRotationOffset) {
-        pitch = this.attributes.maxRotationOffset;
+      if (pitch > this.config.rotation.maxPitch || pitch < this.config.rotation.minPitch) {
+        pitch = Math.max(
+          this.config.rotation.minPitch,
+          Math.min(
+            this.config.rotation.maxPitch,
+            pitch
+          )
+        );
         this.mouse.start.y = this.mouse.y;
-        this.mouse.rotation.x = pitch;
-      } else if (pitch < -this.attributes.maxRotationOffsetLower) {
-        pitch = -this.attributes.maxRotationOffsetLower;
-        this.mouse.start.y = this.mouse.y;
-        this.mouse.rotation.x = pitch;
+        this.mouse.rotation.pitch = pitch;
       }
 
-      this.target.rotation.x = pitch;
+      this.target.rotation.pitch = pitch;
     }
   },
 
-  handleMouseMove(e) {
+  handleMouseUp(e) {
     this.mouse.active = false;
   }
 };

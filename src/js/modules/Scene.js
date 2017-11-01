@@ -27,15 +27,21 @@ Scene.prototype = {
     const self = this;
     self.toLoad = 2;
 
-    // models (async)
+    // models async
     this.loader.loadOBJ('map').then(function(map) {
-      self.scene.add(map);
+      const map2 = map.clone();
+      const map3 = map.clone();
+      const map4 = map.clone();
+      map2.position.set(0, 0, 100)
+      map3.position.set(100, 0, 0)
+      map4.position.set(100, 0, 100)
+      self.scene.add(map, map2, map3, map4);
       self.toLoad -= 1;
     }, function(err) {
       throw(err);
     });
 
-    // load collision map (async)
+    // load collision map async
     self.loader.loadOBJ('collision_map').then(function(map) {
       for (let i=0; i<map.children.length; i+=1) {
         self.collider.add(new Collider.Mesh(map.children[i].geometry));
@@ -51,12 +57,14 @@ Scene.prototype = {
 
     self.lights = {
       a1: new THREE.AmbientLight(0xffffff, 0.25),
+      d1: new THREE.DirectionalLight(0xffffff, 1),
       p1: new THREE.PointLight(0xffffff, .5, 50, 1)
     };
     self.lights.p1.position.set(0, 20, 0);
     self.scene.add(
       self.lights.a1,
-      self.lights.p1
+      self.lights.d1
+      //self.lights.p1
     );
   },
 

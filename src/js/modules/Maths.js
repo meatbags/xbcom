@@ -1,5 +1,15 @@
 const twoPi = Math.PI * 2;
 
+const wrap = function(value, min, max) {
+  if (value < min) {
+    value += (max - min);
+  } else if (value > max) {
+    value -= (max - min);
+  }
+
+  return value;
+}
+
 const copyVector = function(vec) {
   const copied = new THREE.Vector3(
     vec.x,
@@ -108,4 +118,4 @@ const dotProduct = function(a, b) {
   return a.x * b.x + a.y * b.y + a.z * b.z;
 };
 
-export { copyVector, isVectorEqual, pitchBetween, twoPi, distanceBetween, distanceBetween2D, minAngleDifference, dotProduct, addVector, subtractVector, scaleVector, crossProduct, reverseVector, normalise };
+export { wrap, copyVector, isVectorEqual, pitchBetween, twoPi, distanceBetween, distanceBetween2D, minAngleDifference, dotProduct, addVector, subtractVector, scaleVector, crossProduct, reverseVector, normalise };
