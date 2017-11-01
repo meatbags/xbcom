@@ -43,7 +43,7 @@ const App = {
     const now = (new Date()).getTime();
     const delta = (now - App.time) / 1000.;
     App.time = now;
-    App.scene.update(delta);
+    App.scene.update((delta > Config.Global.timeDeltaMax) ? Config.Global.timeDeltaMax : delta);
     App.renderer.render(App.scene.scene, App.scene.camera);
   }
 };

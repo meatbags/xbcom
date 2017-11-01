@@ -39,6 +39,10 @@ Ship.prototype = {
     this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
     this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.veryFast;
     this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
+  },
+
+  toggle: function() {
+    this.active = (this.active == false);
   }
 }
 

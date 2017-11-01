@@ -35,9 +35,9 @@ Scene.prototype = {
       const map2 = map.clone();
       const map3 = map.clone();
       const map4 = map.clone();
-      map2.position.set(0, 0, 100)
-      map3.position.set(100, 0, 0)
-      map4.position.set(100, 0, 100)
+      map2.position.set(0, 0, Config.Area.walk.max);
+      map3.position.set(Config.Area.walk.max, 0, 0)
+      map4.position.set(Config.Area.walk.max, 0, Config.Area.walk.max)
       self.scene.add(map, map2, map3, map4);
       self.toLoad -= 1;
     }, function(err) {
@@ -72,7 +72,7 @@ Scene.prototype = {
     );
 
     // fog
-    self.scene.fog = new THREE.FogExp2(Config.Global.fogColour, 0.015);
+    self.scene.fog = new THREE.FogExp2(Config.Global.fogColour, Config.Global.fogDensity);
   },
 
   isLoaded: function() {

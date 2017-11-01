@@ -54,6 +54,12 @@ Player.prototype = {
 	},
 
   handleInput: function(delta) {
+    // toggle ship
+    if (this.keys.e) {
+      this.keys.e = false;
+      this.ship.toggle();
+    }
+
     // left/ right keys
     if (this.keys.left || this.keys.right) {
       const dir = ((this.keys.left) ? 1 : 0) + ((this.keys.right) ? -1 : 0);
@@ -246,6 +252,7 @@ Player.prototype = {
 
 	update: function(delta, collider) {
     if (this.ship.active) {
+      this.handleInput(delta);
       this.ship.update(delta, collider);
       this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
       this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
@@ -279,6 +286,8 @@ Player.prototype = {
       case 32:
         this.keys.jump = true;
         break;
+      case 69:
+        this.keys.e = true;
       default:
         break;
     }
@@ -301,6 +310,8 @@ Player.prototype = {
       case 39:
       case 68:
         this.keys.right = false;
+        break;
+      default:
         break;
     }
   },
@@ -370,7 +381,8 @@ Player.prototype = {
 			down: false,
 			left: false,
 			right: false,
-      jump: false
+      jump: false,
+      e: false
 		};
     self.mouse = {
       x: 0,

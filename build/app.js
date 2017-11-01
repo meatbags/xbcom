@@ -76,7 +76,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 var Config = {
   Global: {
-    fogColour: 0xf9e5e2
+    fogColour: 0xf9e5e2,
+    fogDensity: 0.018,
+    timeDeltaMax: 0.05
   },
   Loader: {
     glassOpacity: 0.5,
@@ -84,12 +86,12 @@ var Config = {
   },
   Area: {
     collision: {
-      min: -50,
-      max: 50
+      min: -125,
+      max: 125
     },
     walk: {
       min: 0,
-      max: 100
+      max: 250
     }
   },
   Player: {
@@ -107,7 +109,7 @@ var Config = {
       minPitch: Math.PI * -0.25
     },
     speed: {
-      normal: 20, //8
+      normal: 8,
       slowed: 4,
       rotation: Math.PI * 0.75,
       jump: 6
@@ -121,10 +123,10 @@ var Config = {
   Ship: {
     position: {
       x: 0,
-      y: 10,
+      y: 20,
       z: 0
     },
-    speed: 20,
+    speed: 15,
     rotation: {
       pitch: 0,
       yaw: Math.PI * 0.3
@@ -213,7 +215,7 @@ var App = {
     var now = new Date().getTime();
     var delta = (now - App.time) / 1000.;
     App.time = now;
-    App.scene.update(delta);
+    App.scene.update(delta > _Config2.default.Global.timeDeltaMax ? _Config2.default.Global.timeDeltaMax : delta);
     App.renderer.render(App.scene.scene, App.scene.camera);
   }
 };
@@ -278,9 +280,9 @@ Scene.prototype = {
       var map2 = map.clone();
       var map3 = map.clone();
       var map4 = map.clone();
-      map2.position.set(0, 0, 100);
-      map3.position.set(100, 0, 0);
-      map4.position.set(100, 0, 100);
+      map2.position.set(0, 0, _Config2.default.Area.walk.max);
+      map3.position.set(_Config2.default.Area.walk.max, 0, 0);
+      map4.position.set(_Config2.default.Area.walk.max, 0, _Config2.default.Area.walk.max);
       self.scene.add(map, map2, map3, map4);
       self.toLoad -= 1;
     }, function (err) {
@@ -313,7 +315,7 @@ Scene.prototype = {
     );
 
     // fog
-    self.scene.fog = new THREE.FogExp2(_Config2.default.Global.fogColour, 0.015);
+    self.scene.fog = new THREE.FogExp2(_Config2.default.Global.fogColour, _Config2.default.Global.fogDensity);
   },
 
   isLoaded: function isLoaded() {
@@ -410,6 +412,12 @@ Player.prototype = {
   },
 
   handleInput: function handleInput(delta) {
+    // toggle ship
+    if (this.keys.e) {
+      this.keys.e = false;
+      this.ship.toggle();
+    }
+
     // left/ right keys
     if (this.keys.left || this.keys.right) {
       var dir = (this.keys.left ? 1 : 0) + (this.keys.right ? -1 : 0);
@@ -587,6 +595,7 @@ Player.prototype = {
 
   update: function update(delta, collider) {
     if (this.ship.active) {
+      this.handleInput(delta);
       this.ship.update(delta, collider);
       this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
       this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
@@ -620,6 +629,8 @@ Player.prototype = {
       case 32:
         this.keys.jump = true;
         break;
+      case 69:
+        this.keys.e = true;
       default:
         break;
     }
@@ -641,6 +652,8 @@ Player.prototype = {
       case 39:
       case 68:
         this.keys.right = false;
+        break;
+      default:
         break;
     }
   },
@@ -702,7 +715,8 @@ Player.prototype = {
       down: false,
       left: false,
       right: false,
-      jump: false
+      jump: false,
+      e: false
     };
     self.mouse = {
       x: 0,
@@ -1027,6 +1041,10 @@ Ship.prototype = {
     this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
     this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.veryFast;
     this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
+  },
+
+  toggle: function toggle() {
+    this.active = this.active == false;
   }
 };
 

@@ -1,6 +1,8 @@
 const Config = {
   Global: {
     fogColour: 0xf9e5e2,
+    fogDensity: 0.018,
+    timeDeltaMax: 0.05
   },
   Loader: {
     glassOpacity: 0.5,
@@ -8,12 +10,12 @@ const Config = {
   },
   Area: {
     collision: {
-      min: -50,
-      max: 50,
+      min: -125,
+      max: 125,
     },
     walk: {
       min: 0,
-      max: 100,
+      max: 250,
     }
   },
   Player: {
@@ -31,7 +33,7 @@ const Config = {
       minPitch: Math.PI * -0.25
     },
     speed: {
-      normal: 20, //8
+      normal: 8,
       slowed: 4,
       rotation: Math.PI * 0.75,
       jump: 6,
@@ -45,10 +47,10 @@ const Config = {
   Ship: {
     position: {
       x: 0,
-      y: 10,
+      y: 20,
       z: 0
     },
-    speed: 20,
+    speed: 15,
     rotation: {
       pitch: 0,
       yaw: Math.PI * 0.3
