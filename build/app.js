@@ -61,7 +61,7 @@ var XB =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -71,7 +71,70 @@ var XB =
 "use strict";
 
 
-var _Scene = __webpack_require__(1);
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var Config = {
+  Loader: {
+    glassOpacity: 0.5,
+    lightMapIntensity: 1
+  },
+  Player: {
+    position: {
+      x: 0,
+      y: 0,
+      z: 0
+    },
+    rotation: {
+      pitch: 0,
+      yaw: Math.PI,
+      roll: 0
+    },
+    height: 2,
+    speed: {
+      normal: 8,
+      slowed: 4,
+      rotation: Math.PI * 0.75,
+      jump: 6
+    },
+    climb: {
+      up: 1,
+      down: 0.5,
+      minPlaneYAngle: 0.5
+    }
+  },
+  HUD: {
+    turnThreshold: 0.4,
+    maxYawRotation: Math.PI * 0.3
+  },
+  Camera: {
+    fov: 58,
+    aspect: 1,
+    near: 0.1,
+    far: 10000
+  },
+  Physics: {
+    gravity: 10,
+    maxVelocity: 50
+  },
+  Adjust: {
+    slow: 0.025,
+    normal: 0.05,
+    fast: 0.09,
+    veryFast: 0.2
+  }
+};
+
+exports.default = Config;
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _Scene = __webpack_require__(2);
 
 var _Scene2 = _interopRequireDefault(_Scene);
 
@@ -127,7 +190,7 @@ var App = {
 window.onload = App.init;
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -137,11 +200,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _Player = __webpack_require__(2);
+var _Player = __webpack_require__(3);
 
 var _Player2 = _interopRequireDefault(_Player);
 
-var _Loader = __webpack_require__(4);
+var _Loader = __webpack_require__(5);
 
 var _Loader2 = _interopRequireDefault(_Loader);
 
@@ -219,7 +282,7 @@ Scene.prototype = {
 exports.default = Scene;
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -229,11 +292,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _Maths = __webpack_require__(3);
+var _Maths = __webpack_require__(4);
 
 var Maths = _interopRequireWildcard(_Maths);
 
-var _Config = __webpack_require__(5);
+var _Config = __webpack_require__(0);
 
 var _Config2 = _interopRequireDefault(_Config);
 
@@ -241,20 +304,32 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var Player = function Player(domElement) {
   this.domElement = domElement;
   this.position = new THREE.Vector3(_Config2.default.Player.position.x, _Config2.default.Player.position.y, _Config2.default.Player.position.z);
-  this.rotation = new THREE.Vector3(_Config2.default.Player.rotation.x, _Config2.default.Player.rotation.x, _Config2.default.Player.rotation.z);
+  this.rotation = {
+    pitch: _Config2.default.Player.pitch,
+    yaw: _Config2.default.Player.yaw,
+    roll: _Config2.default.Player.roll
+  };
   this.movement = new THREE.Vector3(0, 0, 0);
   this.offset = {
     rotation: new THREE.Vector3(0, 0, 0)
   };
   this.target = {
     position: new THREE.Vector3(_Config2.default.Player.position.x, _Config2.default.Player.position.y, _Config2.default.Player.position.z),
-    rotation: new THREE.Vector3(_Config2.default.Player.rotation.x, _Config2.default.Player.rotation.x, _Config2.default.Player.rotation.z),
+    rotation: {
+      pitch: _Config2.default.Player.pitch,
+      yaw: _Config2.default.Player.yaw
+    },
     movement: new THREE.Vector3(0, 0, 0),
     offset: {
-      rotation: new THREE.Vector3(0, 0, 0)
+      rotation: {
+        pitch: 0,
+        yaw: 0
+      }
     }
   };
   this.falling = false;
@@ -268,7 +343,7 @@ var Player = function Player(domElement) {
   this.init();
 };
 
-Player.prototype = {
+Player.prototype = _defineProperty({
   init: function init() {
     this.light = new THREE.PointLight(0xffffff, 0.5, 25, 2);
     this.light.position.set(0, 1, 0);
@@ -287,18 +362,7 @@ Player.prototype = {
   bindControls: function bindControls() {
     var self = this;
 
-    // mouse
-    self.domElement.addEventListener('click', function (e) {
-      self.handleClick(e);
-    });
-    self.domElement.addEventListener('mousemove', function (e) {
-      self.handleMouseMove(e);
-    }, false);
-    self.domElement.addEventListener('mousedown', function (e) {
-      self.handleMouseDown(e);
-    }, false);
-
-    // keyboard
+    // keys
     self.keys = {
       up: false,
       down: false,
@@ -306,6 +370,37 @@ Player.prototype = {
       right: false,
       jump: false
     };
+    self.mouse = {
+      x: 0,
+      y: 0,
+      start: {
+        x: 0,
+        y: 0
+      },
+      delta: {
+        x: 0,
+        y: 0
+      },
+      rotation: {
+        x: 0,
+        y: 0
+      },
+      locked: false,
+      active: false
+    };
+
+    // mouse
+    self.domElement.addEventListener('mousemove', function (e) {
+      self.handleMouseMove(e);
+    }, false);
+    self.domElement.addEventListener('mousedown', function (e) {
+      self.handleMouseDown(e);
+    }, false);
+    self.domElement.addEventListener('mousemove', function (e) {
+      self.handleMouseUp(e);
+    }, false);
+
+    // keyboard
     document.addEventListener("keydown", function (e) {
       self.handleKeyDown(e);
     }, false);
@@ -452,14 +547,14 @@ Player.prototype = {
     this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
 
     // rotate
-    this.rotation.y += Maths.minAngleDifference(this.rotation.y, this.target.rotation.y) * this.config.adjust.fast;
-    this.offset.rotation.x += (this.target.offset.rotation.x - this.offset.rotation.x) * this.config.adjust.normal;
-    this.offset.rotation.y += (this.target.offset.rotation.y - this.offset.rotation.y) * this.config.adjust.normal;
-    this.rotation.y += this.rotation.y < 0 ? Maths.twoPi : this.rotation.y > Maths.twoPi ? -Maths.twoPi : 0;
+    this.rotation.yaw += Maths.minAngleDifference(this.rotation.yaw, this.target.rotation.yaw) * this.config.adjust.fast;
+    this.offset.rotation.pitch += (this.target.offset.rotation.pitch - this.offset.rotation.pitch) * this.config.adjust.normal;
+    this.offset.rotation.yaw += (this.target.offset.rotation.yaw - this.offset.rotation.yaw) * this.config.adjust.normal;
+    this.rotation.yaw += this.rotation.yaw < 0 ? Maths.twoPi : this.rotation.yaw > Maths.twoPi ? -Maths.twoPi : 0;
 
     // set camera
-    var yaw = this.rotation.y + this.offset.rotation.y;
-    var pitch = this.rotation.x + this.offset.rotation.x;
+    var pitch = this.rotation.pitch + this.offset.rotation.pitch;
+    var yaw = this.rotation.yaw + this.offset.rotation.yaw;
     var height = this.position.y + this.config.height;
 
     this.camera.position.set(this.position.x, height, this.position.z);
@@ -477,9 +572,6 @@ Player.prototype = {
     this.move();
   },
 
-  handleClick: function handleClick(e) {
-    // on click
-  },
   handleKeyDown: function handleKeyDown(e) {
     switch (e.keyCode) {
       case 38:
@@ -526,51 +618,54 @@ Player.prototype = {
     }
   },
   handleMouseDown: function handleMouseDown(e) {
-    var bound = this.domElement.getBoundingClientRect();
-    var w = this.domElement.width;
-    var x = (e.clientX - bound.left) / w;
-    var t = this.config.hud.turnThreshold;
+    if (!this.mouse.locked) {
+      var self = this;
+      var bound = this.domElement.getBoundingClientRect();
 
-    // adjust camera
-    if (x < t) {
-      this.target.rotation.y = this.rotation.y + (t - x) / t * this.config.hud.maxYawRotation;
-    } else if (x > 1 - t) {
-      this.target.rotation.y = this.rotation.y + (x - (1 - t)) / t * -this.config.hud.maxYawRotation;
-    } else {
-      this.target.rotation.y = this.rotation.y;
+      this.mouse.active = true;
+      this.mouse.rotation.x = this.rotation.x;
+      this.mouse.rotation.y = this.rotation.y;
+      this.mouse.start.x = e.clientX / this.domElement.width * 2 - 1;
+      this.mouse.start.y = (e.clientY - bound.y) / this.domElement.height * 2 - 1;
     }
   },
   handleMouseMove: function handleMouseMove(e) {
-    var bound = this.domElement.getBoundingClientRect();
-    var w = this.domElement.width;
-    var h = this.domElement.height;
-    var x = (e.clientX - bound.left) / w;
-    var y = (e.clientY - bound.top) / h;
-    var t = this.config.hud.turnThreshold;
+    if (this.mouse.active) {
+      var bound = this.domElement.getBoundingClientRect();
 
-    // adjust camera
-    if (x < t) {
-      this.target.offset.rotation.y = (t - x) / t * this.config.hud.maxYawRotation;
-    } else if (x > 1 - t) {
-      this.target.offset.rotation.y = (x - (1 - t)) / t * -this.config.hud.maxYawRotation;
-    } else {
-      this.target.offset.rotation.y = 0;
-    }
+      this.mouse.x = e.clientX / this.domElement.width * 2 - 1;
+      this.mouse.y = (e.clientY - bound.y) / this.domElement.height * 2 - 1;
+      this.mouse.delta.x = this.mouse.x - this.mouse.start.x;
+      this.mouse.delta.y = this.mouse.y - this.mouse.start.y;
 
-    if (y < t) {
-      this.target.offset.rotation.x = (t - y) / t * this.config.hud.maxYawRotation;
-    } else if (y > 1 - t) {
-      this.target.offset.rotation.x = (y - (1 - t)) / t * -this.config.hud.maxYawRotation;
-    } else {
-      this.target.offset.rotation.x = 0;
+      // target rotation yaw
+      this.target.rotation.y = this.mouse.rotation.y + this.mouse.delta.x * 1;
+
+      // target rotation pitch
+      var pitch = this.mouse.rotation.x + this.mouse.delta.y * 0.75;
+
+      // if limit reached, reset start point
+      if (pitch > this.attributes.maxRotationOffset) {
+        pitch = this.attributes.maxRotationOffset;
+        this.mouse.start.y = this.mouse.y;
+        this.mouse.rotation.x = pitch;
+      } else if (pitch < -this.attributes.maxRotationOffsetLower) {
+        pitch = -this.attributes.maxRotationOffsetLower;
+        this.mouse.start.y = this.mouse.y;
+        this.mouse.rotation.x = pitch;
+      }
+
+      this.target.rotation.x = pitch;
     }
   }
-};
+}, 'handleMouseMove', function handleMouseMove(e) {
+  this.mouse.active = false;
+});
 
 exports.default = Player;
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -681,7 +776,7 @@ exports.reverseVector = reverseVector;
 exports.normalise = normalise;
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -691,7 +786,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _Config = __webpack_require__(5);
+var _Config = __webpack_require__(0);
 
 var _Config2 = _interopRequireDefault(_Config);
 
@@ -775,69 +870,6 @@ Loader.prototype = {
 };
 
 exports.default = Loader;
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var Config = {
-  Loader: {
-    glassOpacity: 0.5,
-    lightMapIntensity: 1
-  },
-  Player: {
-    position: {
-      x: 0,
-      y: 0,
-      z: 0
-    },
-    rotation: {
-      x: 0,
-      y: Math.PI,
-      z: 0
-    },
-    height: 2,
-    speed: {
-      normal: 8,
-      slowed: 4,
-      rotation: Math.PI * 0.75,
-      jump: 6
-    },
-    climb: {
-      up: 1,
-      down: 0.5,
-      minPlaneYAngle: 0.5
-    }
-  },
-  HUD: {
-    turnThreshold: 0.4,
-    maxYawRotation: Math.PI * 0.3
-  },
-  Camera: {
-    fov: 58,
-    aspect: 1,
-    near: 0.1,
-    far: 10000
-  },
-  Physics: {
-    gravity: 10,
-    maxVelocity: 50
-  },
-  Adjust: {
-    slow: 0.025,
-    normal: 0.05,
-    fast: 0.09,
-    veryFast: 0.2
-  }
-};
-
-exports.default = Config;
 
 /***/ })
 /******/ ]);

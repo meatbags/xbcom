@@ -4,17 +4,27 @@ import Config from './Config';
 const Player = function(domElement) {
   this.domElement = domElement;
   this.position = new THREE.Vector3(Config.Player.position.x, Config.Player.position.y, Config.Player.position.z);
-  this.rotation = new THREE.Vector3(Config.Player.rotation.x, Config.Player.rotation.x, Config.Player.rotation.z);
+  this.rotation = {
+    pitch: Config.Player.pitch,
+    yaw: Config.Player.yaw,
+    roll: Config.Player.roll
+  };
   this.movement = new THREE.Vector3(0, 0, 0);
   this.offset = {
     rotation: new THREE.Vector3(0, 0, 0)
   };
   this.target = {
     position: new THREE.Vector3(Config.Player.position.x, Config.Player.position.y, Config.Player.position.z),
-    rotation: new THREE.Vector3(Config.Player.rotation.x, Config.Player.rotation.x, Config.Player.rotation.z),
+    rotation: {
+      pitch: Config.Player.pitch,
+      yaw: Config.Player.yaw
+    },
     movement: new THREE.Vector3(0, 0, 0),
     offset: {
-      rotation: new THREE.Vector3(0, 0, 0)
+      rotation: {
+        pitch: 0,
+        yaw: 0,
+      }
     }
   };
   this.falling = false;
@@ -47,25 +57,45 @@ Player.prototype = {
 	bindControls: function() {
 		const self = this;
 
-    // mouse
-    self.domElement.addEventListener('click', function(e){
-      self.handleClick(e);
-    });
-    self.domElement.addEventListener('mousemove', function(e){
-      self.handleMouseMove(e);
-    }, false);
-    self.domElement.addEventListener('mousedown', function(e){
-      self.handleMouseDown(e);
-    }, false);
-
-    // keyboard
-		self.keys = {
+    // keys
+    self.keys = {
 			up: false,
 			down: false,
 			left: false,
 			right: false,
       jump: false
 		};
+    self.mouse = {
+      x: 0,
+      y: 0,
+      start: {
+        x: 0,
+        y: 0
+      },
+      delta: {
+        x: 0,
+        y: 0
+      },
+      rotation: {
+        x: 0,
+        y: 0
+      },
+      locked: false,
+      active: false
+    };
+
+    // mouse
+    self.domElement.addEventListener('mousemove', function(e){
+      self.handleMouseMove(e);
+    }, false);
+    self.domElement.addEventListener('mousedown', function(e){
+      self.handleMouseDown(e);
+    }, false);
+    self.domElement.addEventListener('mousemove', function(e){
+      self.handleMouseUp(e);
+    }, false);
+
+    // keyboard
 		document.addEventListener("keydown", function(e) {
       self.handleKeyDown(e);
     }, false);
@@ -223,14 +253,14 @@ Player.prototype = {
     this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
 
     // rotate
-    this.rotation.y += Maths.minAngleDifference(this.rotation.y, this.target.rotation.y) * this.config.adjust.fast;
-    this.offset.rotation.x += (this.target.offset.rotation.x - this.offset.rotation.x) * this.config.adjust.normal;
-    this.offset.rotation.y += (this.target.offset.rotation.y - this.offset.rotation.y) * this.config.adjust.normal;
-    this.rotation.y += (this.rotation.y < 0) ? Maths.twoPi : ((this.rotation.y > Maths.twoPi) ? -Maths.twoPi : 0);
+    this.rotation.yaw += Maths.minAngleDifference(this.rotation.yaw, this.target.rotation.yaw) * this.config.adjust.fast;
+    this.offset.rotation.pitch += (this.target.offset.rotation.pitch - this.offset.rotation.pitch) * this.config.adjust.normal;
+    this.offset.rotation.yaw += (this.target.offset.rotation.yaw - this.offset.rotation.yaw) * this.config.adjust.normal;
+    this.rotation.yaw += (this.rotation.yaw < 0) ? Maths.twoPi : ((this.rotation.yaw > Maths.twoPi) ? -Maths.twoPi : 0);
 
     // set camera
-    const yaw = this.rotation.y + this.offset.rotation.y;
-    const pitch = this.rotation.x + this.offset.rotation.x;
+    const pitch = this.rotation.pitch + this.offset.rotation.pitch;
+    const yaw = this.rotation.yaw + this.offset.rotation.yaw;
     const height = this.position.y + this.config.height;
 
     this.camera.position.set(this.position.x, height, this.position.z);
@@ -251,10 +281,6 @@ Player.prototype = {
     this.checkCollisions(delta, collider);
     this.move();
 	},
-
-  handleClick(e) {
-    // on click
-  },
 
   handleKeyDown(e) {
     switch (e.keyCode) {
@@ -304,45 +330,50 @@ Player.prototype = {
   },
 
   handleMouseDown(e) {
-    const bound = this.domElement.getBoundingClientRect();
-    const w = this.domElement.width;
-    const x = (e.clientX - bound.left) / w;
-    const t = this.config.hud.turnThreshold;
+    if (!this.mouse.locked) {
+      const self = this;
+      const bound = this.domElement.getBoundingClientRect();
 
-    // adjust camera
-    if (x < t) {
-      this.target.rotation.y = this.rotation.y + ((t - x) / t) * this.config.hud.maxYawRotation;
-    } else if (x > 1 - t) {
-      this.target.rotation.y = this.rotation.y + ((x - (1 - t)) / t) * -this.config.hud.maxYawRotation;
-    } else {
-      this.target.rotation.y = this.rotation.y;
+      this.mouse.active = true;
+      this.mouse.rotation.x = this.rotation.x;
+      this.mouse.rotation.y = this.rotation.y;
+      this.mouse.start.x = (e.clientX / this.domElement.width) * 2 - 1;
+      this.mouse.start.y = ((e.clientY - bound.y) / this.domElement.height) * 2 - 1;
     }
   },
 
   handleMouseMove(e) {
-    const bound = this.domElement.getBoundingClientRect();
-    const w = this.domElement.width;
-    const h = this.domElement.height;
-    const x = (e.clientX - bound.left) / w;
-    const y = (e.clientY - bound.top) / h;
-    const t = this.config.hud.turnThreshold;
+    if (this.mouse.active) {
+      const bound = this.domElement.getBoundingClientRect();
 
-    // adjust camera
-    if (x < t) {
-      this.target.offset.rotation.y = ((t - x) / t) * this.config.hud.maxYawRotation;
-    } else if (x > 1 - t) {
-      this.target.offset.rotation.y = ((x - (1 - t)) / t) * -this.config.hud.maxYawRotation;
-    } else {
-      this.target.offset.rotation.y = 0;
-    }
+      this.mouse.x = (e.clientX / this.domElement.width) * 2 - 1;
+      this.mouse.y = ((e.clientY - bound.y) / this.domElement.height) * 2 - 1;
+      this.mouse.delta.x = this.mouse.x - this.mouse.start.x;
+      this.mouse.delta.y = this.mouse.y - this.mouse.start.y;
 
-    if (y < t) {
-      this.target.offset.rotation.x = ((t - y) / t) * this.config.hud.maxYawRotation;
-    } else if (y > (1 - t)) {
-      this.target.offset.rotation.x = ((y - (1 - t)) / t) * -this.config.hud.maxYawRotation;
-    } else {
-      this.target.offset.rotation.x = 0;
+      // target rotation yaw
+      this.target.rotation.y = this.mouse.rotation.y + this.mouse.delta.x * 1;
+
+      // target rotation pitch
+      let pitch = this.mouse.rotation.x + this.mouse.delta.y * 0.75;
+
+      // if limit reached, reset start point
+      if (pitch > this.attributes.maxRotationOffset) {
+        pitch = this.attributes.maxRotationOffset;
+        this.mouse.start.y = this.mouse.y;
+        this.mouse.rotation.x = pitch;
+      } else if (pitch < -this.attributes.maxRotationOffsetLower) {
+        pitch = -this.attributes.maxRotationOffsetLower;
+        this.mouse.start.y = this.mouse.y;
+        this.mouse.rotation.x = pitch;
+      }
+
+      this.target.rotation.x = pitch;
     }
+  },
+
+  handleMouseMove(e) {
+    this.mouse.active = false;
   }
 };
 

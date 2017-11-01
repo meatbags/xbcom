@@ -10,9 +10,9 @@ const Config = {
       z: 0
     },
     rotation: {
-      x: 0,
-      y: Math.PI,
-      z: 0,
+      pitch: 0,
+      yaw: Math.PI,
+      roll: 0,
     },
     height: 2,
     speed: {
