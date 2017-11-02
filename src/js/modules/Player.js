@@ -83,11 +83,16 @@ Player.prototype = {
     }
 
     // jump
+    if (!this.jumped) {
+      this.jumped = 0;
+    }
+
     if (this.keys.jump) {
       this.keys.jump = false;
+      this.jumped += 1;
 
       // jump if not falling
-      if (this.movement.y == 0 || this.fallTimer < this.cofig.speed.fallTimerThreshold) {
+      if (this.movement.y == 0 || this.fallTimer < this.config.speed.fallTimerThreshold) {
         this.movement.y = this.config.speed.jump;
       }
     }
@@ -196,7 +201,7 @@ Player.prototype = {
           next.z = this.target.position.z;
         }
       }
-    } else {
+    } else if (this.movement.y < 0) {
       // check if on downward slope
       const testUnder = Maths.copyVector(next);
       testUnder.y -= this.config.climb.down;
@@ -223,8 +228,6 @@ Player.prototype = {
         }
       }
     }
-
-    this.logger.print(this.movement.y);
 
     // catch on floor
     if (this.movement.y != 0) {

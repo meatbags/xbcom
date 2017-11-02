@@ -367,7 +367,7 @@ var _Player = __webpack_require__(4);
 
 var _Player2 = _interopRequireDefault(_Player);
 
-var _Loader = __webpack_require__(6);
+var _Loader = __webpack_require__(7);
 
 var _Loader2 = _interopRequireDefault(_Loader);
 
@@ -501,7 +501,7 @@ var _Config = __webpack_require__(0);
 
 var _Config2 = _interopRequireDefault(_Config);
 
-var _Logger = __webpack_require__(7);
+var _Logger = __webpack_require__(6);
 
 var _Logger2 = _interopRequireDefault(_Logger);
 
@@ -589,11 +589,16 @@ Player.prototype = {
     }
 
     // jump
+    if (!this.jumped) {
+      this.jumped = 0;
+    }
+
     if (this.keys.jump) {
       this.keys.jump = false;
+      this.jumped += 1;
 
       // jump if not falling
-      if (this.movement.y == 0 || this.fallTimer < this.cofig.speed.fallTimerThreshold) {
+      if (this.movement.y == 0 || this.fallTimer < this.config.speed.fallTimerThreshold) {
         this.movement.y = this.config.speed.jump;
       }
     }
@@ -691,7 +696,7 @@ Player.prototype = {
           next.z = this.target.position.z;
         }
       }
-    } else {
+    } else if (this.movement.y < 0) {
       // check if on downward slope
       var testUnder = Maths.copyVector(next);
       testUnder.y -= this.config.climb.down;
@@ -718,8 +723,6 @@ Player.prototype = {
         }
       }
     }
-
-    this.logger.print(this.movement.y);
 
     // catch on floor
     if (this.movement.y != 0) {
@@ -1031,6 +1034,53 @@ exports.default = Ship;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+var Logger = function Logger() {
+  this.cvs = document.createElement('canvas');
+  this.ctx = this.cvs.getContext('2d');
+  this.init();
+};
+
+Logger.prototype = {
+  init: function init() {
+    document.body.append(this.cvs);
+    this.setStyle();
+  },
+
+  setStyle: function setStyle() {
+    this.cvs.style.position = 'fixed';
+    this.cvs.width = window.innerWidth;
+    this.cvs.style.pointerEvents = 'none';
+    this.cvs.height = 400;
+    this.cvs.style.zIndex = 10;
+    this.cvs.style.top = 0;
+    this.cvs.style.left = 0;
+  },
+
+  clear: function clear() {
+    this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
+  },
+
+  print: function print() {
+    this.clear();
+
+    for (var i = 0; i < arguments.length; i += 1) {
+      this.ctx.fillText(arguments[i], 20, 20 + i * 20);
+    }
+  }
+};
+
+exports.default = Logger;
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
 var _Config = __webpack_require__(0);
 
@@ -1117,53 +1167,6 @@ Loader.prototype = {
 };
 
 exports.default = Loader;
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var Logger = function Logger() {
-  this.cvs = document.createElement('canvas');
-  this.ctx = this.cvs.getContext('2d');
-  this.init();
-};
-
-Logger.prototype = {
-  init: function init() {
-    document.body.append(this.cvs);
-    this.setStyle();
-  },
-
-  setStyle: function setStyle() {
-    this.cvs.style.position = 'fixed';
-    this.cvs.width = window.innerWidth;
-    this.cvs.style.pointerEvents = 'none';
-    this.cvs.height = 400;
-    this.cvs.style.zIndex = 10;
-    this.cvs.style.top = 0;
-    this.cvs.style.left = 0;
-  },
-
-  clear: function clear() {
-    this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
-  },
-
-  print: function print() {
-    this.clear();
-
-    for (var i = 0; i < arguments.length; i += 1) {
-      this.ctx.fillText(arguments[i], 20, 20 + i * 20);
-    }
-  }
-};
-
-exports.default = Logger;
 
 /***/ })
 /******/ ]);
