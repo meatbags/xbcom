@@ -17,7 +17,10 @@ Scene.prototype = {
     self.camera = self.player.camera;
     self.scene = new THREE.Scene();
     self.scene.add(self.player.object);
-    self.collider = new Collider.System();
+    self.collider = {
+      objects: new Collider.System(),
+      ground: new Collider.System()
+    };
 
     // load stuff
     self.loadMaps();
@@ -48,10 +51,20 @@ Scene.prototype = {
       throw(err);
     });
 
-    // load collision map async
-    self.loader.loadOBJ('collision_map').then(function(map) {
+    // load ground collision map async
+    self.loader.loadOBJ('collision_map_ground').then(function(map) {
       for (let i=0; i<map.children.length; i+=1) {
-        self.collider.add(new Collider.Mesh(map.children[i].geometry));
+        self.collider.ground.add(new Collider.Mesh(map.children[i].geometry));
+      }
+      self.toLoad -= 1;
+    }, function(err) {
+      throw(err);
+    });
+
+    // load ground collision map async
+    self.loader.loadOBJ('collision_map_objects').then(function(map) {
+      for (let i=0; i<map.children.length; i+=1) {
+        self.collider.objects.add(new Collider.Mesh(map.children[i].geometry));
       }
       self.toLoad -= 1;
     }, function(err) {
@@ -86,7 +99,7 @@ Scene.prototype = {
   update: function(delta) {
     const self = this;
 
-    self.player.update(delta, self.collider);
+    self.player.update(delta, self.collider.ground, self.collider.objects);
   },
 };
 

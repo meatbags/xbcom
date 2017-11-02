@@ -1,6 +1,7 @@
 import * as Maths from './Maths';
 import Ship from './Ship';
 import Config from './Config';
+import Logger from './Logger';
 
 const Player = function(domElement) {
   this.domElement = domElement;
@@ -32,6 +33,7 @@ const Player = function(domElement) {
     }
   };
   this.falling = false;
+  this.fallTimer = 0;
   this.config = Config.Player;
   this.config.physics = Config.Physics;
   this.config.hud = Config.HUD;
@@ -48,9 +50,10 @@ Player.prototype = {
     this.light = new THREE.PointLight(0xffffff, 0.5, 25, 2);
     this.light.position.set(0, 1, 0);
     this.object.add(this.light);
-    this.ship = new Ship;
+    this.ship = new Ship();
 		this.bindControls();
     this.resizeCamera();
+    this.logger = new Logger();
 	},
 
   handleInput: function(delta) {
@@ -84,13 +87,19 @@ Player.prototype = {
       this.keys.jump = false;
 
       // jump if not falling
-      if (this.movement.y == 0) {
+      if (this.movement.y == 0 || this.fallTimer < this.cofig.speed.fallTimerThreshold) {
         this.movement.y = this.config.speed.jump;
       }
     }
 
     // set falling
     this.falling = (this.movement.y != 0);
+
+    if (this.falling) {
+      this.fallTimer += delta;
+    } else {
+      this.fallTimer = 0;
+    }
 
     // reduce movement if falling
     if (!this.falling) {
@@ -102,7 +111,7 @@ Player.prototype = {
     }
   },
 
-  checkCollisions: function(delta, collider) {
+  checkCollisions: function(delta, ground, objects) {
     // check next position for collision
     let next = Maths.addVector(Maths.scaleVector(this.movement, delta), this.target.position);
 
@@ -113,7 +122,7 @@ Player.prototype = {
     next.z += wrapz;
 
     // get collision map
-    let collisions = collider.collisions(next);
+    let collisions = objects.collisions(next);
 
     // apply gravity
     this.movement.y = Math.max(this.movement.y - this.config.physics.gravity * delta, -this.config.physics.maxVelocity);
@@ -139,7 +148,7 @@ Player.prototype = {
       }
 
       // check for walls
-      collisions = collider.collisions(next);
+      collisions = objects.collisions(next);
       let walls = [];
 
       for (let i=0; i<collisions.length; i+=1) {
@@ -167,7 +176,7 @@ Player.prototype = {
 
         // check extruded point for collisions
         let hits = 0;
-        collisions = collider.collisions(next);
+        collisions = objects.collisions(next);
 
         for (let i=0; i<collisions.length; i+=1) {
           const ceiling = collisions[i].ceilingPlane(next);
@@ -192,14 +201,44 @@ Player.prototype = {
       const testUnder = Maths.copyVector(next);
       testUnder.y -= this.config.climb.down;
 
-      if (!this.falling && collider.collision(testUnder)) {
-        const ceiling = collider.ceilingPlane(testUnder);
+      // check ground
+      if (!this.falling && ground.collision(testUnder)) {
+        const ceiling = ground.ceilingPlane(testUnder);
 
         // snap to slope if not too steep
         if (ceiling.plane.normal.y >= this.config.climb.minPlaneYAngle) {
           next.y = ceiling.y;
           this.movement.y = 0;
         }
+      }
+
+      // check objects
+      if (this.movement.y != 0 && objects.collision(testUnder)) {
+        const ceiling = objects.ceilingPlane(testUnder);
+
+        // snap to slope if not too steep
+        if (ceiling.plane.normal.y >= this.config.climb.minPlaneYAngle) {
+          next.y = ceiling.y;
+          this.movement.y = 0;
+        }
+      }
+    }
+
+    this.logger.print(this.movement.y);
+
+    // catch on floor
+    if (this.movement.y != 0) {
+      const absFloor = ground.ceiling(
+        new THREE.Vector3(next.x, 0, next.z)
+      );
+
+      // limit
+      if (absFloor != null && next.y <= absFloor) {
+        next.y = absFloor;
+        this.movement.y = 0;
+      } else if (next.y <= 0) {
+        next.y = 0;
+        this.movement.y = 0;
       }
     }
 
@@ -224,7 +263,7 @@ Player.prototype = {
 
     // move
     this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
-    this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.fast;
+    this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.rapid;
     this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
 
     // rotate
@@ -250,18 +289,18 @@ Player.prototype = {
     this.object.position.set(this.position.x, this.position.y, this.position.z);
   },
 
-	update: function(delta, collider) {
+	update: function(delta, ground, objects) {
     if (this.ship.active) {
       this.handleInput(delta);
       this.ship.target.rotation.yaw = this.rotation.yaw;
-      this.ship.update(delta, collider);
+      this.ship.update(delta, ground);
       this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
       this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
       this.move();
     } else {
       // handle key presses and move player
       this.handleInput(delta);
-      this.checkCollisions(delta, collider);
+      this.checkCollisions(delta, ground, objects);
       this.move();
     }
 	},

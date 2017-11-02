@@ -61,7 +61,7 @@ var XB =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ 	return __webpack_require__(__webpack_require__.s = 2);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -86,8 +86,8 @@ var Config = {
   },
   Area: {
     collision: {
-      min: -250,
-      max: 250
+      min: -125,
+      max: 375
     },
     walk: {
       min: 0,
@@ -95,7 +95,7 @@ var Config = {
     }
   },
   Player: {
-    height: 1.5,
+    height: 1.9,
     position: {
       x: 0,
       y: 0,
@@ -103,28 +103,29 @@ var Config = {
     },
     rotation: {
       pitch: 0,
-      yaw: Math.PI * 0.3,
+      yaw: Math.PI * 0.29,
       roll: 0,
       maxPitch: Math.PI * 0.25,
       minPitch: Math.PI * -0.25
     },
     speed: {
-      normal: 6,
+      normal: 8,
       slowed: 4,
       rotation: Math.PI * 0.75,
-      jump: 6
+      jump: 6,
+      fallTimerThreshold: 0.1
     },
     climb: {
       up: 1,
       down: 0.5,
-      minPlaneYAngle: 0.5
+      minPlaneYAngle: 0.55
     }
   },
   Ship: {
     position: {
-      x: 250,
-      y: 30,
-      z: 250
+      x: 270,
+      y: 32,
+      z: 270
     },
     speed: 20,
     rotation: {
@@ -143,7 +144,7 @@ var Config = {
     far: 10000
   },
   Physics: {
-    gravity: 10,
+    gravity: 12,
     maxVelocity: 50
   },
   Adjust: {
@@ -151,6 +152,7 @@ var Config = {
     slow: 0.025,
     normal: 0.05,
     fast: 0.09,
+    rapid: 0.15,
     veryFast: 0.2
   }
 };
@@ -164,7 +166,129 @@ exports.default = Config;
 "use strict";
 
 
-var _Scene = __webpack_require__(2);
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var twoPi = Math.PI * 2;
+
+var wrap = function wrap(value, min, max) {
+  if (value < min) {
+    value += max - min;
+  } else if (value > max) {
+    value -= max - min;
+  }
+
+  return value;
+};
+
+var copyVector = function copyVector(vec) {
+  var copied = new THREE.Vector3(vec.x, vec.y, vec.z);
+
+  return copied;
+};
+
+var addVector = function addVector(a, b) {
+  var c = new THREE.Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
+
+  return c;
+};
+
+var subtractVector = function subtractVector(a, b) {
+  var c = new THREE.Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
+
+  return c;
+};
+
+var normalise = function normalise(a) {
+  var mag = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+
+  if (mag == 0) {
+    return a;
+  }
+
+  var normal = new THREE.Vector3(a.x / mag, a.y / mag, a.z / mag);
+
+  return normal;
+};
+
+var reverseVector = function reverseVector(a) {
+  a.x *= -1;
+  a.y *= -1;
+  a.z *= -1;
+
+  return a;
+};
+
+var distanceBetween = function distanceBetween(a, b) {
+  var d = Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2) + Math.pow(b.z - a.z, 2));
+
+  return d;
+};
+
+var distanceBetween2D = function distanceBetween2D(a, b) {
+  var dist = Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.z - a.z, 2));
+
+  return dist;
+};
+
+var pitchBetween = function pitchBetween(a, b) {
+  var xz = distanceBetween2D(a, b);
+  var y = b.y - a.y;
+  var pitch = Math.atan2(y, xz);
+
+  return pitch;
+};
+
+var scaleVector = function scaleVector(v, scale) {
+  var vec = new THREE.Vector3(v.x * scale, v.y * scale, v.z * scale);
+
+  return vec;
+};
+
+var isVectorEqual = function isVectorEqual(a, b) {
+  return a.x === b.x && a.y === b.y & a.z === b.z;
+};
+
+var crossProduct = function crossProduct(a, b) {
+  var c = new THREE.Vector3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+
+  return c;
+};
+
+var minAngleDifference = function minAngleDifference(a1, a2) {
+  var angle = Math.atan2(Math.sin(a2 - a1), Math.cos(a2 - a1));
+
+  return angle;
+};
+
+var dotProduct = function dotProduct(a, b) {
+  return a.x * b.x + a.y * b.y + a.z * b.z;
+};
+
+exports.wrap = wrap;
+exports.copyVector = copyVector;
+exports.isVectorEqual = isVectorEqual;
+exports.pitchBetween = pitchBetween;
+exports.twoPi = twoPi;
+exports.distanceBetween = distanceBetween;
+exports.distanceBetween2D = distanceBetween2D;
+exports.minAngleDifference = minAngleDifference;
+exports.dotProduct = dotProduct;
+exports.addVector = addVector;
+exports.subtractVector = subtractVector;
+exports.scaleVector = scaleVector;
+exports.crossProduct = crossProduct;
+exports.reverseVector = reverseVector;
+exports.normalise = normalise;
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _Scene = __webpack_require__(3);
 
 var _Scene2 = _interopRequireDefault(_Scene);
 
@@ -229,7 +353,7 @@ var App = {
 window.onload = App.init;
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -239,11 +363,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _Player = __webpack_require__(3);
+var _Player = __webpack_require__(4);
 
 var _Player2 = _interopRequireDefault(_Player);
 
-var _Loader = __webpack_require__(5);
+var _Loader = __webpack_require__(6);
 
 var _Loader2 = _interopRequireDefault(_Loader);
 
@@ -268,7 +392,10 @@ Scene.prototype = {
     self.camera = self.player.camera;
     self.scene = new THREE.Scene();
     self.scene.add(self.player.object);
-    self.collider = new Collider.System();
+    self.collider = {
+      objects: new Collider.System(),
+      ground: new Collider.System()
+    };
 
     // load stuff
     self.loadMaps();
@@ -299,10 +426,20 @@ Scene.prototype = {
       throw err;
     });
 
-    // load collision map async
-    self.loader.loadOBJ('collision_map').then(function (map) {
+    // load ground collision map async
+    self.loader.loadOBJ('collision_map_ground').then(function (map) {
       for (var i = 0; i < map.children.length; i += 1) {
-        self.collider.add(new Collider.Mesh(map.children[i].geometry));
+        self.collider.ground.add(new Collider.Mesh(map.children[i].geometry));
+      }
+      self.toLoad -= 1;
+    }, function (err) {
+      throw err;
+    });
+
+    // load ground collision map async
+    self.loader.loadOBJ('collision_map_objects').then(function (map) {
+      for (var i = 0; i < map.children.length; i += 1) {
+        self.collider.objects.add(new Collider.Mesh(map.children[i].geometry));
       }
       self.toLoad -= 1;
     }, function (err) {
@@ -335,14 +472,14 @@ Scene.prototype = {
   update: function update(delta) {
     var self = this;
 
-    self.player.update(delta, self.collider);
+    self.player.update(delta, self.collider.ground, self.collider.objects);
   }
 };
 
 exports.default = Scene;
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -352,17 +489,21 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _Maths = __webpack_require__(4);
+var _Maths = __webpack_require__(1);
 
 var Maths = _interopRequireWildcard(_Maths);
 
-var _Ship = __webpack_require__(6);
+var _Ship = __webpack_require__(5);
 
 var _Ship2 = _interopRequireDefault(_Ship);
 
 var _Config = __webpack_require__(0);
 
 var _Config2 = _interopRequireDefault(_Config);
+
+var _Logger = __webpack_require__(7);
+
+var _Logger2 = _interopRequireDefault(_Logger);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -398,6 +539,7 @@ var Player = function Player(domElement) {
     }
   };
   this.falling = false;
+  this.fallTimer = 0;
   this.config = _Config2.default.Player;
   this.config.physics = _Config2.default.Physics;
   this.config.hud = _Config2.default.HUD;
@@ -417,6 +559,7 @@ Player.prototype = {
     this.ship = new _Ship2.default();
     this.bindControls();
     this.resizeCamera();
+    this.logger = new _Logger2.default();
   },
 
   handleInput: function handleInput(delta) {
@@ -450,13 +593,19 @@ Player.prototype = {
       this.keys.jump = false;
 
       // jump if not falling
-      if (this.movement.y == 0) {
+      if (this.movement.y == 0 || this.fallTimer < this.cofig.speed.fallTimerThreshold) {
         this.movement.y = this.config.speed.jump;
       }
     }
 
     // set falling
     this.falling = this.movement.y != 0;
+
+    if (this.falling) {
+      this.fallTimer += delta;
+    } else {
+      this.fallTimer = 0;
+    }
 
     // reduce movement if falling
     if (!this.falling) {
@@ -468,7 +617,7 @@ Player.prototype = {
     }
   },
 
-  checkCollisions: function checkCollisions(delta, collider) {
+  checkCollisions: function checkCollisions(delta, ground, objects) {
     // check next position for collision
     var next = Maths.addVector(Maths.scaleVector(this.movement, delta), this.target.position);
 
@@ -479,7 +628,7 @@ Player.prototype = {
     next.z += wrapz;
 
     // get collision map
-    var collisions = collider.collisions(next);
+    var collisions = objects.collisions(next);
 
     // apply gravity
     this.movement.y = Math.max(this.movement.y - this.config.physics.gravity * delta, -this.config.physics.maxVelocity);
@@ -501,7 +650,7 @@ Player.prototype = {
       }
 
       // check for walls
-      collisions = collider.collisions(next);
+      collisions = objects.collisions(next);
       var walls = [];
 
       for (var _i = 0; _i < collisions.length; _i += 1) {
@@ -526,7 +675,7 @@ Player.prototype = {
 
         // check extruded point for collisions
         var hits = 0;
-        collisions = collider.collisions(next);
+        collisions = objects.collisions(next);
 
         for (var _i3 = 0; _i3 < collisions.length; _i3 += 1) {
           var _ceiling2 = collisions[_i3].ceilingPlane(next);
@@ -547,14 +696,42 @@ Player.prototype = {
       var testUnder = Maths.copyVector(next);
       testUnder.y -= this.config.climb.down;
 
-      if (!this.falling && collider.collision(testUnder)) {
-        var _ceiling3 = collider.ceilingPlane(testUnder);
+      // check ground
+      if (!this.falling && ground.collision(testUnder)) {
+        var _ceiling3 = ground.ceilingPlane(testUnder);
 
         // snap to slope if not too steep
         if (_ceiling3.plane.normal.y >= this.config.climb.minPlaneYAngle) {
           next.y = _ceiling3.y;
           this.movement.y = 0;
         }
+      }
+
+      // check objects
+      if (this.movement.y != 0 && objects.collision(testUnder)) {
+        var _ceiling4 = objects.ceilingPlane(testUnder);
+
+        // snap to slope if not too steep
+        if (_ceiling4.plane.normal.y >= this.config.climb.minPlaneYAngle) {
+          next.y = _ceiling4.y;
+          this.movement.y = 0;
+        }
+      }
+    }
+
+    this.logger.print(this.movement.y);
+
+    // catch on floor
+    if (this.movement.y != 0) {
+      var absFloor = ground.ceiling(new THREE.Vector3(next.x, 0, next.z));
+
+      // limit
+      if (absFloor != null && next.y <= absFloor) {
+        next.y = absFloor;
+        this.movement.y = 0;
+      } else if (next.y <= 0) {
+        next.y = 0;
+        this.movement.y = 0;
       }
     }
 
@@ -579,7 +756,7 @@ Player.prototype = {
 
     // move
     this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
-    this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.fast;
+    this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.rapid;
     this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
 
     // rotate
@@ -601,18 +778,18 @@ Player.prototype = {
     this.object.position.set(this.position.x, this.position.y, this.position.z);
   },
 
-  update: function update(delta, collider) {
+  update: function update(delta, ground, objects) {
     if (this.ship.active) {
       this.handleInput(delta);
       this.ship.target.rotation.yaw = this.rotation.yaw;
-      this.ship.update(delta, collider);
+      this.ship.update(delta, ground);
       this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
       this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
       this.move();
     } else {
       // handle key presses and move player
       this.handleInput(delta);
-      this.checkCollisions(delta, collider);
+      this.checkCollisions(delta, ground, objects);
       this.move();
     }
   },
@@ -776,7 +953,7 @@ Player.prototype = {
 exports.default = Player;
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -785,120 +962,67 @@ exports.default = Player;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var twoPi = Math.PI * 2;
 
-var wrap = function wrap(value, min, max) {
-  if (value < min) {
-    value += max - min;
-  } else if (value > max) {
-    value -= max - min;
+var _Config = __webpack_require__(0);
+
+var _Config2 = _interopRequireDefault(_Config);
+
+var _Maths = __webpack_require__(1);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var Ship = function Ship() {
+  this.active = true;
+  this.position = new THREE.Vector3(_Config2.default.Ship.position.x, _Config2.default.Ship.position.y, _Config2.default.Ship.position.z);
+  this.rotation = {
+    pitch: _Config2.default.Ship.rotation.pitch,
+    yaw: _Config2.default.Ship.rotation.yaw
+  };
+  this.target = {
+    position: new THREE.Vector3(_Config2.default.Ship.position.x, _Config2.default.Ship.position.y, _Config2.default.Ship.position.z),
+    rotation: {
+      pitch: _Config2.default.Ship.rotation.pitch,
+      yaw: _Config2.default.Ship.rotation.yaw
+    }
+  };
+  this.speed = _Config2.default.Ship.speed;
+  this.config = _Config2.default.Ship;
+  this.config.area = _Config2.default.Area;
+  this.config.adjust = _Config2.default.Adjust;
+};
+
+Ship.prototype = {
+  update: function update(delta, collider) {
+    // rotate
+    this.rotation.yaw += this.config.adjust.slow * (0, _Maths.minAngleDifference)(this.rotation.yaw, this.target.rotation.yaw);
+
+    // move target
+    this.target.position.x += this.speed * Math.sin(this.rotation.yaw) * delta;
+    this.target.position.z += this.speed * Math.cos(this.rotation.yaw) * delta;
+
+    // wrap
+    var wrapx = (0, _Maths.wrap)(this.target.position.x, this.config.area.walk.min, this.config.area.walk.max);
+    var wrapz = (0, _Maths.wrap)(this.target.position.z, this.config.area.walk.min, this.config.area.walk.max);
+    this.position.x = wrapx + (this.position.x - this.target.position.x);
+    this.position.z = wrapz + (this.position.z - this.target.position.z);
+    this.target.position.x = wrapx;
+    this.target.position.z = wrapz;
+
+    // move
+    this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
+    this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.veryFast;
+    this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
+  },
+
+  toggle: function toggle() {
+    this.active = this.active == false;
   }
-
-  return value;
 };
 
-var copyVector = function copyVector(vec) {
-  var copied = new THREE.Vector3(vec.x, vec.y, vec.z);
-
-  return copied;
-};
-
-var addVector = function addVector(a, b) {
-  var c = new THREE.Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
-
-  return c;
-};
-
-var subtractVector = function subtractVector(a, b) {
-  var c = new THREE.Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
-
-  return c;
-};
-
-var normalise = function normalise(a) {
-  var mag = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
-
-  if (mag == 0) {
-    return a;
-  }
-
-  var normal = new THREE.Vector3(a.x / mag, a.y / mag, a.z / mag);
-
-  return normal;
-};
-
-var reverseVector = function reverseVector(a) {
-  a.x *= -1;
-  a.y *= -1;
-  a.z *= -1;
-
-  return a;
-};
-
-var distanceBetween = function distanceBetween(a, b) {
-  var d = Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2) + Math.pow(b.z - a.z, 2));
-
-  return d;
-};
-
-var distanceBetween2D = function distanceBetween2D(a, b) {
-  var dist = Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.z - a.z, 2));
-
-  return dist;
-};
-
-var pitchBetween = function pitchBetween(a, b) {
-  var xz = distanceBetween2D(a, b);
-  var y = b.y - a.y;
-  var pitch = Math.atan2(y, xz);
-
-  return pitch;
-};
-
-var scaleVector = function scaleVector(v, scale) {
-  var vec = new THREE.Vector3(v.x * scale, v.y * scale, v.z * scale);
-
-  return vec;
-};
-
-var isVectorEqual = function isVectorEqual(a, b) {
-  return a.x === b.x && a.y === b.y & a.z === b.z;
-};
-
-var crossProduct = function crossProduct(a, b) {
-  var c = new THREE.Vector3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
-
-  return c;
-};
-
-var minAngleDifference = function minAngleDifference(a1, a2) {
-  var angle = Math.atan2(Math.sin(a2 - a1), Math.cos(a2 - a1));
-
-  return angle;
-};
-
-var dotProduct = function dotProduct(a, b) {
-  return a.x * b.x + a.y * b.y + a.z * b.z;
-};
-
-exports.wrap = wrap;
-exports.copyVector = copyVector;
-exports.isVectorEqual = isVectorEqual;
-exports.pitchBetween = pitchBetween;
-exports.twoPi = twoPi;
-exports.distanceBetween = distanceBetween;
-exports.distanceBetween2D = distanceBetween2D;
-exports.minAngleDifference = minAngleDifference;
-exports.dotProduct = dotProduct;
-exports.addVector = addVector;
-exports.subtractVector = subtractVector;
-exports.scaleVector = scaleVector;
-exports.crossProduct = crossProduct;
-exports.reverseVector = reverseVector;
-exports.normalise = normalise;
+exports.default = Ship;
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -936,8 +1060,7 @@ Loader.prototype = {
 
       // set material
       child.material = materials.materials[child.material.name];
-
-      console.log(meta);
+      //console.log(meta);
 
       // load lightmaps
       if (meta.map_ka) {
@@ -996,7 +1119,7 @@ Loader.prototype = {
 exports.default = Loader;
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1005,64 +1128,42 @@ exports.default = Loader;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-
-var _Config = __webpack_require__(0);
-
-var _Config2 = _interopRequireDefault(_Config);
-
-var _Maths = __webpack_require__(4);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var Ship = function Ship() {
-  this.active = true;
-  this.position = new THREE.Vector3(_Config2.default.Ship.position.x, _Config2.default.Ship.position.y, _Config2.default.Ship.position.z);
-  this.rotation = {
-    pitch: _Config2.default.Ship.rotation.pitch,
-    yaw: _Config2.default.Ship.rotation.yaw
-  };
-  this.target = {
-    position: new THREE.Vector3(_Config2.default.Ship.position.x, _Config2.default.Ship.position.y, _Config2.default.Ship.position.z),
-    rotation: {
-      pitch: _Config2.default.Ship.rotation.pitch,
-      yaw: _Config2.default.Ship.rotation.yaw
-    }
-  };
-  this.speed = _Config2.default.Ship.speed;
-  this.config = _Config2.default.Ship;
-  this.config.area = _Config2.default.Area;
-  this.config.adjust = _Config2.default.Adjust;
+var Logger = function Logger() {
+  this.cvs = document.createElement('canvas');
+  this.ctx = this.cvs.getContext('2d');
+  this.init();
 };
 
-Ship.prototype = {
-  update: function update(delta, collider) {
-    // rotate
-    this.rotation.yaw += this.config.adjust.slow * (0, _Maths.minAngleDifference)(this.rotation.yaw, this.target.rotation.yaw);
-
-    // move target
-    this.target.position.x += this.speed * Math.sin(this.rotation.yaw) * delta;
-    this.target.position.z += this.speed * Math.cos(this.rotation.yaw) * delta;
-
-    // wrap
-    var wrapx = (0, _Maths.wrap)(this.target.position.x, this.config.area.walk.min, this.config.area.walk.max);
-    var wrapz = (0, _Maths.wrap)(this.target.position.z, this.config.area.walk.min, this.config.area.walk.max);
-    this.position.x = wrapx + (this.position.x - this.target.position.x);
-    this.position.z = wrapz + (this.position.z - this.target.position.z);
-    this.target.position.x = wrapx;
-    this.target.position.z = wrapz;
-
-    // move
-    this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
-    this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.veryFast;
-    this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
+Logger.prototype = {
+  init: function init() {
+    document.body.append(this.cvs);
+    this.setStyle();
   },
 
-  toggle: function toggle() {
-    this.active = this.active == false;
+  setStyle: function setStyle() {
+    this.cvs.style.position = 'fixed';
+    this.cvs.width = window.innerWidth;
+    this.cvs.style.pointerEvents = 'none';
+    this.cvs.height = 400;
+    this.cvs.style.zIndex = 10;
+    this.cvs.style.top = 0;
+    this.cvs.style.left = 0;
+  },
+
+  clear: function clear() {
+    this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
+  },
+
+  print: function print() {
+    this.clear();
+
+    for (var i = 0; i < arguments.length; i += 1) {
+      this.ctx.fillText(arguments[i], 20, 20 + i * 20);
+    }
   }
 };
 
-exports.default = Ship;
+exports.default = Logger;
 
 /***/ })
 /******/ ]);

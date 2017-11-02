@@ -10,8 +10,8 @@ const Config = {
   },
   Area: {
     collision: {
-      min: -250,
-      max: 250,
+      min: -125,
+      max: 375,
     },
     walk: {
       min: 0,
@@ -19,7 +19,7 @@ const Config = {
     }
   },
   Player: {
-    height: 1.5,
+    height: 1.9,
     position: {
       x: 0,
       y: 0,
@@ -27,28 +27,29 @@ const Config = {
     },
     rotation: {
       pitch: 0,
-      yaw: Math.PI * 0.3,
+      yaw: Math.PI * 0.29,
       roll: 0,
       maxPitch: Math.PI * 0.25,
       minPitch: Math.PI * -0.25
     },
     speed: {
-      normal: 6,
+      normal: 8,
       slowed: 4,
       rotation: Math.PI * 0.75,
       jump: 6,
+      fallTimerThreshold: 0.1,
     },
     climb: {
       up: 1,
       down: 0.5,
-      minPlaneYAngle: 0.5,
+      minPlaneYAngle: 0.55,
     },
   },
   Ship: {
     position: {
-      x: 250,
-      y: 30,
-      z: 250
+      x: 270,
+      y: 32,
+      z: 270
     },
     speed: 20,
     rotation: {
@@ -67,7 +68,7 @@ const Config = {
     far: 10000,
   },
   Physics: {
-    gravity: 10,
+    gravity: 12,
     maxVelocity: 50,
   },
   Adjust: {
@@ -75,6 +76,7 @@ const Config = {
     slow: 0.025,
     normal: 0.05,
     fast: 0.09,
+    rapid: 0.15,
     veryFast: 0.2,
   }
 };

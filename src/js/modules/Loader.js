@@ -22,8 +22,7 @@ Loader.prototype = {
 
       // set material
       child.material = materials.materials[child.material.name];
-
-      console.log(meta);
+      //console.log(meta);
 
       // load lightmaps
       if (meta.map_ka) {
