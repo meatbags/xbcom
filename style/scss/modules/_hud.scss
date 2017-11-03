@@ -9,9 +9,9 @@
   pointer-events: none;
 
   .hud__inner {
-    width: 50vh;
-    height: 50vh;
-    border-radius: 50vh;
+    width: 40vh;
+    height: 40vh;
+    border-radius: 40vh;
     display: flex;
     flex-wrap: wrap;
     transition: $transition;
@@ -29,7 +29,8 @@
         pointer-events: all;
         cursor: pointer;
         color: $pink;
-        border: 2px solid $pink;
+        outline: 1px solid $pink;
+        border: 1px solid $pink;
 
         &:hover {
           background-color: $pinkTranslucent;
@@ -129,6 +130,7 @@
   }
 }
 
+$hudButtonSize: 20vh;
 $hudButtonActiveSize: 80px;
 
 .hud__button {
@@ -136,11 +138,11 @@ $hudButtonActiveSize: 80px;
   position: fixed;
   top: 50%;
   left: 50%;
-  margin-top: -12.5vh;
-  margin-left: -12.5vh;
-  width: 25vh;
-  height: 25vh;
-  border-radius: 25vh;
+  margin-top: -$hudButtonSize / 2;
+  margin-left: -$hudButtonSize / 2;
+  width: $hudButtonSize;
+  height: $hudButtonSize;
+  border-radius: $hudButtonSize;
   border: 2px solid $pink;
   transition: $transition;
   z-index: $indexHUD + 1;

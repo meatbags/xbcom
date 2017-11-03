@@ -109,10 +109,10 @@ var Config = {
       minPitch: Math.PI * -0.25
     },
     speed: {
-      normal: 8,
-      slowed: 4,
+      normal: 9,
+      slowed: 5,
       rotation: Math.PI * 0.75,
-      jump: 6,
+      jump: 13,
       fallTimerThreshold: 0.1
     },
     climb: {
