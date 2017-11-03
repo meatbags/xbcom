@@ -549,7 +549,7 @@ Scene.prototype = {
     // load maps
 
     var self = this;
-    self.toLoad = 2;
+    self.toLoad = 3;
 
     // models async
     this.loader.loadOBJ('map').then(function (map) {
@@ -578,7 +578,7 @@ Scene.prototype = {
       throw err;
     });
 
-    // load ground collision map async
+    // load ground collision map (async)
     self.loader.loadOBJ('collision_map_ground').then(function (map) {
       for (var i = 0; i < map.children.length; i += 1) {
         self.collider.ground.add(new Collider.Mesh(map.children[i].geometry));
