@@ -42,10 +42,23 @@ Scene.prototype = {
       const map2 = map.clone();
       const map3 = map.clone();
       const map4 = map.clone();
-      map2.position.set(0, 0, Config.Area.walk.max);
-      map3.position.set(Config.Area.walk.max, 0, 0)
-      map4.position.set(Config.Area.walk.max, 0, Config.Area.walk.max)
-      self.scene.add(map, map2, map3, map4);
+      const map5 = map.clone();
+      const map6 = map.clone();
+      const map7 = map.clone();
+      const map8 = map.clone();
+      const map9 = map.clone();
+      const offset = Config.Area.walk.max - Config.Area.walk.min;
+
+      map2.position.set(0, 0, offset);
+      map3.position.set(0, 0, -offset);
+      map4.position.set(offset, 0, 0);
+      map5.position.set(-offset, 0, 0);
+      map6.position.set(offset, 0, offset);
+      map7.position.set(offset, 0, -offset);
+      map8.position.set(-offset, 0, offset);
+      map9.position.set(-offset, 0, -offset);
+
+      self.scene.add(map, map2, map3, map4, map5, map6, map7, map8, map9);
       self.toLoad -= 1;
     }, function(err) {
       throw(err);
@@ -79,9 +92,9 @@ Scene.prototype = {
     self.lights = {
       a1: new THREE.AmbientLight(0xffffff, 0.25),
       d1: new THREE.DirectionalLight(0xffffff, 0.5),
-      p1: new THREE.PointLight(0xffffff, .5, 50, 1)
+      //p1: new THREE.PointLight(0xffffff, .5, 50, 1)
     };
-    self.lights.p1.position.set(0, 20, 0);
+    //self.lights.p1.position.set(0, 20, 0);
     self.scene.add(
       self.lights.a1,
       self.lights.d1

@@ -22,13 +22,15 @@ const Player = function(domElement) {
     position: new THREE.Vector3(Config.Player.position.x, Config.Player.position.y, Config.Player.position.z),
     rotation: {
       pitch: Config.Player.rotation.pitch,
-      yaw: Config.Player.rotation.yaw
+      yaw: Config.Player.rotation.yaw,
+      roll: Config.Player.rotation.roll,
     },
     movement: new THREE.Vector3(0, 0, 0),
     offset: {
       rotation: {
         pitch: 0,
         yaw: 0,
+        roll: 0,
       }
     }
   };
@@ -56,13 +58,25 @@ Player.prototype = {
     this.logger = new Logger();
 	},
 
-  handleInput: function(delta) {
-    // toggle ship
-    if (this.keys.e) {
-      this.keys.e = false;
-      this.ship.toggle();
+  update: function(delta, ground, objects) {
+    if (this.ship.active) {
+      this.handleInput(delta);
+      //this.ship.target.rotation.yaw = this.rotation.yaw;
+      this.ship.update(delta, ground);
+      this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
+      this.target.rotation.yaw = this.ship.rotation.yaw;
+      this.target.rotation.roll = this.ship.rotation.roll;
+      this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
+      this.move();
+    } else {
+      // handle key presses and move player
+      this.handleInput(delta);
+      this.checkCollisions(delta, ground, objects);
+      this.move();
     }
+	},
 
+  handleInput: function(delta) {
     // left/ right keys
     if (this.keys.left || this.keys.right) {
       const dir = ((this.keys.left) ? 1 : 0) + ((this.keys.right) ? -1 : 0);
@@ -275,13 +289,21 @@ Player.prototype = {
     this.rotation.yaw += (this.rotation.yaw < 0) ? Maths.twoPi : ((this.rotation.yaw > Maths.twoPi) ? -Maths.twoPi : 0);
     this.rotation.pitch += (this.target.rotation.pitch - this.rotation.pitch) * this.config.adjust.normal;
     this.offset.rotation.pitch += (this.target.offset.rotation.pitch - this.offset.rotation.pitch) * this.config.adjust.normal;
+    this.rotation.roll += (this.target.rotation.roll - this.rotation.roll) * this.config.adjust.slow;
 
     // set camera
     const pitch = this.rotation.pitch + this.offset.rotation.pitch;
     const yaw = this.rotation.yaw + this.offset.rotation.yaw;
     const height = this.position.y + this.config.height;
 
+    // set up (roll)
+    this.camera.up.z = -Math.sin(this.rotation.yaw) * this.rotation.roll;
+    this.camera.up.x = Math.cos(this.rotation.yaw) * this.rotation.roll;
+
+    // set position
     this.camera.position.set(this.position.x, height, this.position.z);
+
+    // look
     this.camera.lookAt(new THREE.Vector3(
       this.position.x + Math.sin(yaw),
       height + Math.sin(pitch),
@@ -291,22 +313,6 @@ Player.prototype = {
     // set world object
     this.object.position.set(this.position.x, this.position.y, this.position.z);
   },
-
-	update: function(delta, ground, objects) {
-    if (this.ship.active) {
-      this.handleInput(delta);
-      this.ship.target.rotation.yaw = this.rotation.yaw;
-      this.ship.update(delta, ground);
-      this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
-      this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
-      this.move();
-    } else {
-      // handle key presses and move player
-      this.handleInput(delta);
-      this.checkCollisions(delta, ground, objects);
-      this.move();
-    }
-	},
 
   handleKeyDown(e) {
     switch (e.keyCode) {
@@ -329,8 +335,6 @@ Player.prototype = {
       case 32:
         this.keys.jump = true;
         break;
-      case 69:
-        this.keys.e = true;
       default:
         break;
     }
@@ -360,7 +364,7 @@ Player.prototype = {
   },
 
   handleMouseDown(e) {
-    if (!this.mouse.locked) {
+    if (!this.mouse.locked && !this.ship.active) {
       const self = this;
       const bound = this.domElement.getBoundingClientRect();
 
@@ -424,8 +428,7 @@ Player.prototype = {
 			down: false,
 			left: false,
 			right: false,
-      jump: false,
-      e: false
+      jump: false
 		};
     self.mouse = {
       x: 0,

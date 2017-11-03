@@ -1,0 +1,123 @@
+.hud {
+  z-index: $indexHUD;
+  position: fixed;
+  width: 100vw;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+
+  .hud__inner {
+    width: 50vh;
+    height: 50vh;
+    border-radius: 50vh;
+    display: flex;
+    flex-wrap: wrap;
+    transition: $transition;
+    border: 2px solid $pink;
+    transform: rotate(45deg);
+
+    .hud__inner__grid {
+      width: 50%;
+      height: 50%;
+      transition: $transition;
+      padding: 0;
+
+      &.filled {
+        pointer-events: all;
+        cursor: pointer;
+
+        &:hover {
+          background-color: $pinkTranslucent;
+        }
+
+        &.active {
+          background-color: $pinkTranslucent;
+        }
+      }
+
+      .hud__inner__grid__inner {
+        width: 100%;
+        height: 100%;
+        border: 2px solid $pink;
+      }
+    }
+
+    &.active-right {
+      transform: rotate(90deg);
+    }
+
+    &.active-left {
+      transform: rotate(0deg);
+    }
+
+    &.hidden {
+      opacity: 0;
+      transform: scale(1.5, 1.5);
+
+      .hud__inner__grid {
+        &.transform-right, &.transform-left {
+          pointer-events: none;
+        }
+
+        &.transform-right {
+          transform: translate(200px, 0);
+        }
+
+        &.transform-left {
+          transform: translate(-200px, 0);
+        }
+      }
+    }
+  }
+}
+
+$hudButtonActiveSize: 80px;
+
+.hud__button {
+  @extend .noselect;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin-top: -12.5vh;
+  margin-left: -12.5vh;
+  width: 25vh;
+  height: 25vh;
+  border-radius: 25vh;
+  border: 2px solid $pink;
+  transition: $transition;
+  z-index: $indexHUD + 1;
+  pointer-events: all;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &.active {
+    top: 0;
+    margin-top: $hudButtonActiveSize / 2;
+    margin-left: -$hudButtonActiveSize / 2;
+    width: $hudButtonActiveSize;
+    height: $hudButtonActiveSize;
+    border-radius: $hudButtonActiveSize;
+  }
+
+  &.hidden {
+    opacity: 0;
+  }
+
+  &:hover {
+    background-color: $pinkTranslucent;
+
+    .hud__button__inner {
+      opacity: 1;
+    }
+  }
+
+  .hud__button__inner {
+    opacity: 0;
+    transition: $transitionFast;
+    color: $pink;
+  }
+}

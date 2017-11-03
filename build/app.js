@@ -77,7 +77,7 @@ Object.defineProperty(exports, "__esModule", {
 var Config = {
   Global: {
     fogColour: 0xf9e5e2,
-    fogDensity: 0.010,
+    fogDensity: 0.009, //0.1
     timeDeltaMax: 0.05
   },
   Loader: {
@@ -90,8 +90,8 @@ var Config = {
       max: 375
     },
     walk: {
-      min: 0,
-      max: 500
+      min: -125,
+      max: 375
     }
   },
   Player: {
@@ -130,7 +130,9 @@ var Config = {
     speed: 20,
     rotation: {
       pitch: 0,
-      yaw: 0
+      yaw: Math.PI * 0.29,
+      roll: 0,
+      maxRoll: 0.5
     }
   },
   HUD: {
@@ -334,9 +336,69 @@ var App = {
     if (!App.scene.isLoaded()) {
       requestAnimationFrame(App.loading);
     } else {
+      App.removeLoadingScreen();
+      App.hud();
       App.time = new Date().getTime();
       App.loop();
     }
+  },
+
+  hud: function hud() {
+    $('#hud-button').on('click', function () {
+      if ($(this).hasClass('active')) {
+        App.scene.player.ship.takeOff();
+
+        if (App.scene.player.ship.active) {
+          $(this).removeClass('active');
+          $(this).removeClass('text-large');
+          $(this).addClass('text-huge');
+          $(this).find('.hud__button__inner').html('&darr;');
+          $('.hud__inner').removeClass('hidden');
+        }
+      } else {
+        App.scene.player.ship.land();
+
+        if (!App.scene.player.ship.active) {
+          $(this).removeClass('text-huge');
+          $(this).addClass('text-large');
+          $(this).addClass('active');
+          $(this).find('.hud__button__inner').html('&uarr;');
+          $('.hud__inner').addClass('hidden');
+        }
+      }
+    });
+    $('#hud-right').on('click', function () {
+      $('.hud__inner').removeClass('active-left');
+      $('.hud__inner').toggleClass('active-right');
+      $('.hud__inner__grid').removeClass('active');
+      if ($('.hud__inner').hasClass('active-right')) {
+        $(this).addClass('active');
+        App.scene.player.ship.setBank(-0.25);
+      } else {
+        App.scene.player.ship.setBank(0);
+      }
+    });
+    $('#hud-left').on('click', function () {
+      $('.hud__inner').removeClass('active-right');
+      $('.hud__inner').toggleClass('active-left');
+      $('.hud__inner__grid').removeClass('active');
+      if ($('.hud__inner').hasClass('active-left')) {
+        $(this).addClass('active');
+        App.scene.player.ship.setBank(0.25);
+      } else {
+        App.scene.player.ship.setBank(0);
+      }
+    });
+
+    setTimeout(function () {
+      $('.hud__inner').removeClass('hidden');
+      $('.hud__button').removeClass('hidden');
+    }, 2000);
+  },
+
+  removeLoadingScreen: function removeLoadingScreen() {
+    $('.loading-screen__inner').fadeOut(1000);
+    $('.loading-screen').fadeOut(3000);
   },
 
   loop: function loop() {
@@ -417,10 +479,23 @@ Scene.prototype = {
       var map2 = map.clone();
       var map3 = map.clone();
       var map4 = map.clone();
-      map2.position.set(0, 0, _Config2.default.Area.walk.max);
-      map3.position.set(_Config2.default.Area.walk.max, 0, 0);
-      map4.position.set(_Config2.default.Area.walk.max, 0, _Config2.default.Area.walk.max);
-      self.scene.add(map, map2, map3, map4);
+      var map5 = map.clone();
+      var map6 = map.clone();
+      var map7 = map.clone();
+      var map8 = map.clone();
+      var map9 = map.clone();
+      var offset = _Config2.default.Area.walk.max - _Config2.default.Area.walk.min;
+
+      map2.position.set(0, 0, offset);
+      map3.position.set(0, 0, -offset);
+      map4.position.set(offset, 0, 0);
+      map5.position.set(-offset, 0, 0);
+      map6.position.set(offset, 0, offset);
+      map7.position.set(offset, 0, -offset);
+      map8.position.set(-offset, 0, offset);
+      map9.position.set(-offset, 0, -offset);
+
+      self.scene.add(map, map2, map3, map4, map5, map6, map7, map8, map9);
       self.toLoad -= 1;
     }, function (err) {
       throw err;
@@ -453,10 +528,10 @@ Scene.prototype = {
     // lighting
     self.lights = {
       a1: new THREE.AmbientLight(0xffffff, 0.25),
-      d1: new THREE.DirectionalLight(0xffffff, 0.5),
-      p1: new THREE.PointLight(0xffffff, .5, 50, 1)
+      d1: new THREE.DirectionalLight(0xffffff, 0.5)
+      //p1: new THREE.PointLight(0xffffff, .5, 50, 1)
     };
-    self.lights.p1.position.set(0, 20, 0);
+    //self.lights.p1.position.set(0, 20, 0);
     self.scene.add(self.lights.a1, self.lights.d1
     //self.lights.p1
     );
@@ -528,13 +603,15 @@ var Player = function Player(domElement) {
     position: new THREE.Vector3(_Config2.default.Player.position.x, _Config2.default.Player.position.y, _Config2.default.Player.position.z),
     rotation: {
       pitch: _Config2.default.Player.rotation.pitch,
-      yaw: _Config2.default.Player.rotation.yaw
+      yaw: _Config2.default.Player.rotation.yaw,
+      roll: _Config2.default.Player.rotation.roll
     },
     movement: new THREE.Vector3(0, 0, 0),
     offset: {
       rotation: {
         pitch: 0,
-        yaw: 0
+        yaw: 0,
+        roll: 0
       }
     }
   };
@@ -562,13 +639,25 @@ Player.prototype = {
     this.logger = new _Logger2.default();
   },
 
-  handleInput: function handleInput(delta) {
-    // toggle ship
-    if (this.keys.e) {
-      this.keys.e = false;
-      this.ship.toggle();
+  update: function update(delta, ground, objects) {
+    if (this.ship.active) {
+      this.handleInput(delta);
+      //this.ship.target.rotation.yaw = this.rotation.yaw;
+      this.ship.update(delta, ground);
+      this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
+      this.target.rotation.yaw = this.ship.rotation.yaw;
+      this.target.rotation.roll = this.ship.rotation.roll;
+      this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
+      this.move();
+    } else {
+      // handle key presses and move player
+      this.handleInput(delta);
+      this.checkCollisions(delta, ground, objects);
+      this.move();
     }
+  },
 
+  handleInput: function handleInput(delta) {
     // left/ right keys
     if (this.keys.left || this.keys.right) {
       var dir = (this.keys.left ? 1 : 0) + (this.keys.right ? -1 : 0);
@@ -768,33 +857,25 @@ Player.prototype = {
     this.rotation.yaw += this.rotation.yaw < 0 ? Maths.twoPi : this.rotation.yaw > Maths.twoPi ? -Maths.twoPi : 0;
     this.rotation.pitch += (this.target.rotation.pitch - this.rotation.pitch) * this.config.adjust.normal;
     this.offset.rotation.pitch += (this.target.offset.rotation.pitch - this.offset.rotation.pitch) * this.config.adjust.normal;
+    this.rotation.roll += (this.target.rotation.roll - this.rotation.roll) * this.config.adjust.slow;
 
     // set camera
     var pitch = this.rotation.pitch + this.offset.rotation.pitch;
     var yaw = this.rotation.yaw + this.offset.rotation.yaw;
     var height = this.position.y + this.config.height;
 
+    // set up (roll)
+    this.camera.up.z = -Math.sin(this.rotation.yaw) * this.rotation.roll;
+    this.camera.up.x = Math.cos(this.rotation.yaw) * this.rotation.roll;
+
+    // set position
     this.camera.position.set(this.position.x, height, this.position.z);
+
+    // look
     this.camera.lookAt(new THREE.Vector3(this.position.x + Math.sin(yaw), height + Math.sin(pitch), this.position.z + Math.cos(yaw)));
 
     // set world object
     this.object.position.set(this.position.x, this.position.y, this.position.z);
-  },
-
-  update: function update(delta, ground, objects) {
-    if (this.ship.active) {
-      this.handleInput(delta);
-      this.ship.target.rotation.yaw = this.rotation.yaw;
-      this.ship.update(delta, ground);
-      this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
-      this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
-      this.move();
-    } else {
-      // handle key presses and move player
-      this.handleInput(delta);
-      this.checkCollisions(delta, ground, objects);
-      this.move();
-    }
   },
 
   handleKeyDown: function handleKeyDown(e) {
@@ -818,8 +899,6 @@ Player.prototype = {
       case 32:
         this.keys.jump = true;
         break;
-      case 69:
-        this.keys.e = true;
       default:
         break;
     }
@@ -847,7 +926,7 @@ Player.prototype = {
     }
   },
   handleMouseDown: function handleMouseDown(e) {
-    if (!this.mouse.locked) {
+    if (!this.mouse.locked && !this.ship.active) {
       var self = this;
       var bound = this.domElement.getBoundingClientRect();
 
@@ -904,8 +983,7 @@ Player.prototype = {
       down: false,
       left: false,
       right: false,
-      jump: false,
-      e: false
+      jump: false
     };
     self.mouse = {
       x: 0,
@@ -979,15 +1057,19 @@ var Ship = function Ship() {
   this.position = new THREE.Vector3(_Config2.default.Ship.position.x, _Config2.default.Ship.position.y, _Config2.default.Ship.position.z);
   this.rotation = {
     pitch: _Config2.default.Ship.rotation.pitch,
-    yaw: _Config2.default.Ship.rotation.yaw
+    yaw: _Config2.default.Ship.rotation.yaw,
+    roll: _Config2.default.Ship.rotation.roll
   };
   this.target = {
     position: new THREE.Vector3(_Config2.default.Ship.position.x, _Config2.default.Ship.position.y, _Config2.default.Ship.position.z),
     rotation: {
       pitch: _Config2.default.Ship.rotation.pitch,
-      yaw: _Config2.default.Ship.rotation.yaw
-    }
+      yaw: _Config2.default.Ship.rotation.yaw,
+      roll: _Config2.default.Ship.rotation.roll
+    },
+    bank: 0
   };
+  this.bank = 0;
   this.speed = _Config2.default.Ship.speed;
   this.config = _Config2.default.Ship;
   this.config.area = _Config2.default.Area;
@@ -996,8 +1078,13 @@ var Ship = function Ship() {
 
 Ship.prototype = {
   update: function update(delta, collider) {
+    // bank
+    this.bank += (this.target.bank - this.bank) * this.config.adjust.normal;
+    this.target.rotation.yaw += this.bank * delta;
+
     // rotate
     this.rotation.yaw += this.config.adjust.slow * (0, _Maths.minAngleDifference)(this.rotation.yaw, this.target.rotation.yaw);
+    this.rotation.roll += (this.target.rotation.roll - this.rotation.roll) * this.config.adjust.slow;
 
     // move target
     this.target.position.x += this.speed * Math.sin(this.rotation.yaw) * delta;
@@ -1015,6 +1102,19 @@ Ship.prototype = {
     this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
     this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.veryFast;
     this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
+  },
+
+  takeOff: function takeOff() {
+    this.active = true;
+  },
+
+  land: function land() {
+    this.active = false;
+  },
+
+  setBank: function setBank(value) {
+    this.target.bank = value;
+    this.target.rotation.roll = value == 0 ? 0 : value > 0 ? this.config.rotation.maxRoll : -this.config.rotation.maxRoll;
   },
 
   toggle: function toggle() {

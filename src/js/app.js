@@ -37,9 +37,69 @@ const App = {
     if (!App.scene.isLoaded()) {
       requestAnimationFrame(App.loading);
     } else {
+      App.removeLoadingScreen();
+      App.hud();
       App.time = (new Date()).getTime();
       App.loop();
     }
+  },
+
+  hud: function() {
+    $('#hud-button').on('click', function(){
+      if ($(this).hasClass('active')) {
+        App.scene.player.ship.takeOff();
+
+        if (App.scene.player.ship.active) {
+          $(this).removeClass('active');
+          $(this).removeClass('text-large');
+          $(this).addClass('text-huge');
+          $(this).find('.hud__button__inner').html('&darr;');
+          $('.hud__inner').removeClass('hidden');
+        }
+      } else {
+        App.scene.player.ship.land();
+
+        if (!App.scene.player.ship.active) {
+          $(this).removeClass('text-huge');
+          $(this).addClass('text-large');
+          $(this).addClass('active');
+          $(this).find('.hud__button__inner').html('&uarr;');
+          $('.hud__inner').addClass('hidden');
+        }
+      }
+    });
+    $('#hud-right').on('click', function() {
+      $('.hud__inner').removeClass('active-left');
+      $('.hud__inner').toggleClass('active-right');
+      $('.hud__inner__grid').removeClass('active');
+      if ($('.hud__inner').hasClass('active-right')) {
+        $(this).addClass('active');
+        App.scene.player.ship.setBank(-0.25);
+      } else {
+        App.scene.player.ship.setBank(0);
+      }
+    });
+    $('#hud-left').on('click', function() {
+      $('.hud__inner').removeClass('active-right');
+      $('.hud__inner').toggleClass('active-left');
+      $('.hud__inner__grid').removeClass('active');
+      if ($('.hud__inner').hasClass('active-left')) {
+        $(this).addClass('active');
+        App.scene.player.ship.setBank(0.25);
+      } else {
+        App.scene.player.ship.setBank(0);
+      }
+    });
+
+    setTimeout(function() {
+      $('.hud__inner').removeClass('hidden');
+      $('.hud__button').removeClass('hidden');
+    }, 2000);
+  },
+
+  removeLoadingScreen: function() {
+    $('.loading-screen__inner').fadeOut(1000);
+    $('.loading-screen').fadeOut(3000);
   },
 
   loop: function() {

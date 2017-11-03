@@ -1,0 +1,11 @@
+
+.nav {
+  z-index: $indexNav;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  position: fixed;
+  padding: $space * 2;
+  color: $pink;
+  text-shadow: 2px 2px $darkPink;
+}

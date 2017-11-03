@@ -2,15 +2,43 @@
 <html>
 <head>
   <title>Xavier Burrow</title>
-  <link rel='stylesheet' type='text/css' href='./style/style.css' />
   <script type='text/javascript' src='./lib/three.min.js'></script>
   <script type='text/javascript' src='./lib/MTLLoader.js'></script>
   <script type='text/javascript' src='./lib/OBJLoader.js'></script>
   <script type='text/javascript' src='./lib/collider.min.js'></script>
+  <script type='text/javascript' src='./lib/jquery.min.js'></script>
   <script type='text/javascript' src='./build/app.min.js'></script>
+  <link href="https://fonts.googleapis.com/css?family=Work+Sans" rel="stylesheet">
+  <link rel='stylesheet' type='text/css' href='./style/style.css' />
   <link rel="icon" type="image/png" href="favicon.png" />
 </head>
 <body>
+  <div class='loading-screen'>
+    <div class='loading-screen__inner'>
+      <div class='loading-message'>LOADING</div>
+      <div class='loading-bar'>
+        <div class='loading-bar__inner'></div>
+      </div>
+    </div>
+  </div>
+  <div class='nav'>
+    XAVIER BURROW
+  </div>
+  <div class='hud'>
+    <div class='hud__inner hidden'>
+      <div class='hud__inner__grid blank'></div>
+      <div id='hud-right' class='hud__inner__grid transform-right filled'>
+        <div class='hud__inner__grid__inner'></div>
+      </div>
+      <div id='hud-left' class='hud__inner__grid transform-left filled'>
+        <div class='hud__inner__grid__inner'></div>
+      </div>
+      <div class='hud__inner__grid blank'></div>
+    </div>
+  </div>
+  <div id='hud-button' class='hud__button text-huge'>
+    <div class='hud__button__inner'>&darr;</div>
+  </div>
   <div id='wrapper'>
     <!-- content loads here -->
   </div>

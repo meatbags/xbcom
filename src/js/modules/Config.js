@@ -1,7 +1,7 @@
 const Config = {
   Global: {
     fogColour: 0xf9e5e2,
-    fogDensity: 0.010,
+    fogDensity: 0.009, //0.1
     timeDeltaMax: 0.05
   },
   Loader: {
@@ -14,8 +14,8 @@ const Config = {
       max: 375,
     },
     walk: {
-      min: 0,
-      max: 500,
+      min: -125,
+      max: 375,
     }
   },
   Player: {
@@ -54,7 +54,9 @@ const Config = {
     speed: 20,
     rotation: {
       pitch: 0,
-      yaw: 0
+      yaw: Math.PI * 0.29,
+      roll: 0,
+      maxRoll: 0.5,
     }
   },
   HUD: {
