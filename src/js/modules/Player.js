@@ -55,25 +55,31 @@ Player.prototype = {
     this.ship = new Ship();
 		this.bindControls();
     this.resizeCamera();
-    this.logger = new Logger();
+    // this.logger = new Logger();
 	},
 
   update: function(delta, ground, objects) {
-    if (this.ship.active) {
-      this.handleInput(delta);
-      //this.ship.target.rotation.yaw = this.rotation.yaw;
-      this.ship.update(delta, ground);
+    // update controls & move ship
+    this.handleInput(delta);
+    this.ship.update(delta, this);
+
+    if (!this.ship.active) {
+      // handle key presses and move player
+      this.target.rotation.roll = 0;
+      this.checkCollisions(delta, ground, objects);
+    } else {
+      // lock to ship
+      this.movement.y = 0;
       this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
       this.target.rotation.yaw = this.ship.rotation.yaw;
+      this.target.rotation.pitch = this.ship.rotation.pitch;
       this.target.rotation.roll = this.ship.rotation.roll;
-      this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
-      this.move();
-    } else {
-      // handle key presses and move player
-      this.handleInput(delta);
-      this.checkCollisions(delta, ground, objects);
-      this.move();
+      this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
     }
+
+    //this.logger.print(this.ship.position.y, this.ship.speed);
+
+    this.move();
 	},
 
   handleInput: function(delta) {

@@ -21,24 +21,64 @@
       </div>
     </div>
   </div>
+
   <div class='nav'>
-    XAVIER BURROW
+    <div class='nav__grid left'>
+      <div class='nav-item nav-about'>
+        XAVIER BURROW
+      </div>
+    </div>
+    <div class='nav__grid right'>
+      <div class='nav-item nav-controls'>
+        CONTROLS
+      </div>
+      <div class='nav-item nav-about'>
+        ABOUT
+      </div>
+    </div>
   </div>
+
   <div class='hud'>
     <div class='hud__inner hidden'>
       <div class='hud__inner__grid blank'></div>
       <div id='hud-right' class='hud__inner__grid transform-right filled'>
-        <div class='hud__inner__grid__inner'></div>
+        <div class='hud__inner__grid__inner'>
+          <div class='arrow text-huge'>&rarr;</div>
+        </div>
       </div>
       <div id='hud-left' class='hud__inner__grid transform-left filled'>
-        <div class='hud__inner__grid__inner'></div>
+        <div class='hud__inner__grid__inner'>
+          <div class='arrow text-huge'>&larr;</div>
+        </div>
       </div>
       <div class='hud__inner__grid blank'></div>
     </div>
   </div>
-  <div id='hud-button' class='hud__button text-huge'>
+
+  <div id='hud-button' class='hud__button hidden text-huge'>
     <div class='hud__button__inner'>&darr;</div>
   </div>
+
+  <div id='menu-about' class='hud-menu text-medium'>
+    <span class='underline'>XAVIER BURROW</span><br /><br />
+    ...is a programmer, animator, and web designer. See more projects
+    <a target='_blank' href='http://xavier-burrow.com/info/projects'>here</a>!
+    <br /><br />
+    Get in touch:<br />
+    <a target='_blank' href='https://github.com/meatbags'>Github</a>
+    <a target='_blank' href='https://www.instagram.com/xavebabes/'>Instagram</a>
+    <a target='_blank' href='mailto:jxburrow@gmail.com'>jxburrow@gmail.com</a>
+    <div class='menu-close'>CLOSE</div>
+  </div>
+
+  <div id='menu-controls' class='hud-menu text-medium'>
+    <span class='underline'>SURFACE CONTROLS</span><br /><br />
+    <em>Click &amp; drag</em> to pan.<br />
+    Use the <em>arrow keys</em> to move.<br />
+    Jump with the <em>space bar</em>.
+    <div class='menu-close'>GOT IT!</div>
+  </div>
+
   <div id='wrapper'>
     <!-- content loads here -->
   </div>

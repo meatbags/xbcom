@@ -78,7 +78,7 @@ const Config = {
     slow: 0.025,
     normal: 0.05,
     fast: 0.09,
-    rapid: 0.15,
+    rapid: 0.12,
     veryFast: 0.2,
   }
 };

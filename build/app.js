@@ -154,7 +154,7 @@ var Config = {
     slow: 0.025,
     normal: 0.05,
     fast: 0.09,
-    rapid: 0.15,
+    rapid: 0.12,
     veryFast: 0.2
   }
 };
@@ -343,12 +343,70 @@ var App = {
     }
   },
 
+  showControls: function showControls() {
+    if (App.scene.player.ship.active) {
+      $('.hud__inner').removeClass('hidden');
+    }
+    $('.hud__button').removeClass('hidden');
+  },
+
+  hideControls: function hideControls() {
+    if (!$('.hud__inner').hasClass('hidden')) {
+      $('.hud__inner').addClass('hidden');
+    }
+    if (!$('.hud__button').hasClass('hidden')) {
+      $('.hud__button').addClass('hidden');
+    }
+  },
+
   hud: function hud() {
+    App.navActive = false;
+    App.notified = false;
+
+    // about / controls
+    $('.nav-controls').on('click', function () {
+      if (App.navActive) {
+        $('#menu-controls').toggleClass('active');
+        $('#menu-about').removeClass('active');
+
+        // show/hide hud
+        if ($('#menu-controls').hasClass('active')) {
+          App.hideControls();
+          App.notified = true;
+        } else {
+          App.showControls();
+        }
+      }
+    });
+    $('.nav-about').on('click', function () {
+      if (App.navActive) {
+        $('#menu-controls').removeClass('active');
+        $('#menu-about').toggleClass('active');
+
+        // show/hide hud
+        if ($('#menu-about').hasClass('active')) {
+          App.hideControls();
+        } else {
+          App.showControls();
+        }
+      }
+    });
+
+    // menu close buttons
+    $('.menu-close').on('click', function () {
+      $(this).closest('.hud-menu').removeClass('active');
+      App.showControls();
+    });
+
+    // landing button
     $('#hud-button').on('click', function () {
       if ($(this).hasClass('active')) {
+        // take off
         App.scene.player.ship.takeOff();
 
         if (App.scene.player.ship.active) {
+          // update HUD
+
           $(this).removeClass('active');
           $(this).removeClass('text-large');
           $(this).addClass('text-huge');
@@ -356,17 +414,34 @@ var App = {
           $('.hud__inner').removeClass('hidden');
         }
       } else {
+        // land ship
         App.scene.player.ship.land();
 
         if (!App.scene.player.ship.active) {
+          // update HUD
+
+          $('.hud__inner').removeClass('active-left');
+          $('.hud__inner').removeClass('active-right');
+          $('.hud__inner__grid').removeClass('active');
           $(this).removeClass('text-huge');
           $(this).addClass('text-large');
           $(this).addClass('active');
           $(this).find('.hud__button__inner').html('&uarr;');
           $('.hud__inner').addClass('hidden');
+
+          // notify
+          if (!App.notified) {
+            setTimeout(function () {
+              if (!App.notified) {
+                $('.nav-controls').click();
+              }
+            }, 2000);
+          }
         }
       }
     });
+
+    // spaceship controls (left/ right)
     $('#hud-right').on('click', function () {
       $('.hud__inner').removeClass('active-left');
       $('.hud__inner').toggleClass('active-right');
@@ -378,6 +453,7 @@ var App = {
         App.scene.player.ship.setBank(0);
       }
     });
+
     $('#hud-left').on('click', function () {
       $('.hud__inner').removeClass('active-right');
       $('.hud__inner').toggleClass('active-left');
@@ -390,10 +466,11 @@ var App = {
       }
     });
 
+    // show HUD
     setTimeout(function () {
-      $('.hud__inner').removeClass('hidden');
-      $('.hud__button').removeClass('hidden');
-    }, 2000);
+      App.showControls();
+      App.navActive = true;
+    }, 3000);
   },
 
   removeLoadingScreen: function removeLoadingScreen() {
@@ -636,25 +713,31 @@ Player.prototype = {
     this.ship = new _Ship2.default();
     this.bindControls();
     this.resizeCamera();
-    this.logger = new _Logger2.default();
+    // this.logger = new Logger();
   },
 
   update: function update(delta, ground, objects) {
-    if (this.ship.active) {
-      this.handleInput(delta);
-      //this.ship.target.rotation.yaw = this.rotation.yaw;
-      this.ship.update(delta, ground);
+    // update controls & move ship
+    this.handleInput(delta);
+    this.ship.update(delta, this);
+
+    if (!this.ship.active) {
+      // handle key presses and move player
+      this.target.rotation.roll = 0;
+      this.checkCollisions(delta, ground, objects);
+    } else {
+      // lock to ship
+      this.movement.y = 0;
       this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
       this.target.rotation.yaw = this.ship.rotation.yaw;
+      this.target.rotation.pitch = this.ship.rotation.pitch;
       this.target.rotation.roll = this.ship.rotation.roll;
       this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
-      this.move();
-    } else {
-      // handle key presses and move player
-      this.handleInput(delta);
-      this.checkCollisions(delta, ground, objects);
-      this.move();
     }
+
+    //this.logger.print(this.ship.position.y, this.ship.speed);
+
+    this.move();
   },
 
   handleInput: function handleInput(delta) {
@@ -1067,7 +1150,8 @@ var Ship = function Ship() {
       yaw: _Config2.default.Ship.rotation.yaw,
       roll: _Config2.default.Ship.rotation.roll
     },
-    bank: 0
+    bank: 0,
+    speed: _Config2.default.Ship.speed
   };
   this.bank = 0;
   this.speed = _Config2.default.Ship.speed;
@@ -1077,39 +1161,55 @@ var Ship = function Ship() {
 };
 
 Ship.prototype = {
-  update: function update(delta, collider) {
-    // bank
-    this.bank += (this.target.bank - this.bank) * this.config.adjust.normal;
-    this.target.rotation.yaw += this.bank * delta;
+  update: function update(delta, player) {
+    if (this.active) {
+      // bank
+      this.bank += (this.target.bank - this.bank) * this.config.adjust.normal;
+      this.target.rotation.yaw += this.bank * delta;
 
-    // rotate
-    this.rotation.yaw += this.config.adjust.slow * (0, _Maths.minAngleDifference)(this.rotation.yaw, this.target.rotation.yaw);
-    this.rotation.roll += (this.target.rotation.roll - this.rotation.roll) * this.config.adjust.slow;
+      // accelerate
+      this.speed += (this.target.speed - this.speed) * this.config.adjust.slow;
 
-    // move target
-    this.target.position.x += this.speed * Math.sin(this.rotation.yaw) * delta;
-    this.target.position.z += this.speed * Math.cos(this.rotation.yaw) * delta;
+      // rotate
+      this.rotation.yaw += this.config.adjust.slow * (0, _Maths.minAngleDifference)(this.rotation.yaw, this.target.rotation.yaw);
+      this.rotation.roll += (this.target.rotation.roll - this.rotation.roll) * this.config.adjust.slow;
 
-    // wrap
-    var wrapx = (0, _Maths.wrap)(this.target.position.x, this.config.area.walk.min, this.config.area.walk.max);
-    var wrapz = (0, _Maths.wrap)(this.target.position.z, this.config.area.walk.min, this.config.area.walk.max);
-    this.position.x = wrapx + (this.position.x - this.target.position.x);
-    this.position.z = wrapz + (this.position.z - this.target.position.z);
-    this.target.position.x = wrapx;
-    this.target.position.z = wrapz;
+      // move target
+      this.target.position.x += this.speed * Math.sin(this.rotation.yaw) * delta;
+      this.target.position.z += this.speed * Math.cos(this.rotation.yaw) * delta;
 
-    // move
-    this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
-    this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.veryFast;
-    this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
+      // wrap
+      var wrapx = (0, _Maths.wrap)(this.target.position.x, this.config.area.walk.min, this.config.area.walk.max);
+      var wrapz = (0, _Maths.wrap)(this.target.position.z, this.config.area.walk.min, this.config.area.walk.max);
+      this.position.x = wrapx + (this.position.x - this.target.position.x);
+      this.position.z = wrapz + (this.position.z - this.target.position.z);
+      this.target.position.x = wrapx;
+      this.target.position.z = wrapz;
+
+      // move
+      this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
+      this.position.y += (this.target.position.y - this.position.y) * this.config.adjust.verySlow;
+      this.position.z += (this.target.position.z - this.position.z) * this.config.adjust.veryFast;
+    } else {
+      // inactive, set to player
+      this.target.position.x = this.position.x = player.position.x;
+      this.target.position.y = this.position.y = player.position.y;
+      this.target.position.z = this.position.z = player.position.z;
+      this.target.rotation.yaw = this.rotation.yaw = player.rotation.yaw;
+    }
   },
 
   takeOff: function takeOff() {
     this.active = true;
+    this.target.speed = _Config2.default.Ship.speed;
+    this.target.position.y = _Config2.default.Ship.position.y;
   },
 
   land: function land() {
     this.active = false;
+    this.target.speed = this.speed = 0;
+    this.setBank(0);
+    this.rotation.roll = this.target.rotation.roll;
   },
 
   setBank: function setBank(value) {

@@ -22,3 +22,19 @@ html, body {
     height: 100%;
   }
 }
+
+em {
+  font-weight: bold;
+  color: $darkPink;
+}
+
+a {
+  color: inherit;
+  text-decoration: underline;
+  color: $darkPink;
+  transition: $transitionFast;
+
+  &:hover {
+    color: $pink;
+  }
+}

@@ -1,11 +1,36 @@
 
 .nav {
+  @extend .noselect;
   z-index: $indexNav;
   width: 100%;
-  bottom: 0;
+  top: 0;
   left: 0;
   position: fixed;
-  padding: $space * 2;
   color: $pink;
-  text-shadow: 2px 2px $darkPink;
+  display: flex;
+
+  .nav__grid {
+    width: 50%;
+    display: flex;
+    padding-left: $space;
+    padding-right: $space;
+
+    &.left {
+      justify-content: flex-start;
+    }
+
+    &.right {
+      justify-content: flex-end;
+    }
+
+    .nav-item {
+      cursor: pointer;
+      padding: $space * 2;
+      transition: $transitionFast;
+
+      &:hover {
+        color: $darkPink;
+      }
+    }
+  }
 }

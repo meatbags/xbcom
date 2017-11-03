@@ -1,5 +1,6 @@
 
 $white: #fff;
+$whiteTranslucent: rgba(255, 255, 255, 0.15);
 $black: #000;
 $pink: #ffa6a6;
 $pinkTranslucent: rgba(255, 166, 166, 0.5);
@@ -7,14 +8,15 @@ $darkPink: #885353;
 $darkPinkTranslucent: rgba(128, 83, 83, 0.5);
 
 $indexLoading: 100;
-$indexHUD: 50;
-$indexNav: 75;
+$indexHUD: 75;
+$indexNav: 50;
 
 $transition: 1s;
 $transitionFast: 0.5s;
 
 $space: 8px;
 
-$fontSizeNormal: 14px;
+$fontSizeNormal: 15px;
+$fontSizeMedium: 20px;
 $fontSizeLarge: 28px;
 $fontSizeHuge: 56px;
