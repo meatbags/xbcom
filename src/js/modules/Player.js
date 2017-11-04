@@ -70,14 +70,15 @@ Player.prototype = {
     } else {
       // lock to ship
       this.movement.y = 0;
-      this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z)
-      this.target.rotation.yaw = this.ship.rotation.yaw;
-      this.target.rotation.pitch = this.ship.rotation.pitch;
+      this.ship.target.rotation.yaw = this.target.rotation.yaw;
+      //this.target.rotation.yaw = this.ship.rotation.yaw;
+      //this.target.rotation.pitch = this.ship.rotation.pitch;
       this.target.rotation.roll = this.ship.rotation.roll;
+      this.target.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
       this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
     }
 
-    //this.logger.print(this.ship.position.y, this.ship.speed);
+  //this.logger.print(this.ship.rotation.roll);
 
     this.move();
 	},
@@ -295,7 +296,7 @@ Player.prototype = {
     this.rotation.yaw += (this.rotation.yaw < 0) ? Maths.twoPi : ((this.rotation.yaw > Maths.twoPi) ? -Maths.twoPi : 0);
     this.rotation.pitch += (this.target.rotation.pitch - this.rotation.pitch) * this.config.adjust.normal;
     this.offset.rotation.pitch += (this.target.offset.rotation.pitch - this.offset.rotation.pitch) * this.config.adjust.normal;
-    this.rotation.roll += (this.target.rotation.roll - this.rotation.roll) * this.config.adjust.slow;
+    this.rotation.roll += (this.target.rotation.roll - this.rotation.roll) * this.config.adjust.fast;
 
     // set camera
     const pitch = this.rotation.pitch + this.offset.rotation.pitch;
@@ -370,7 +371,7 @@ Player.prototype = {
   },
 
   handleMouseDown(e) {
-    if (!this.mouse.locked && !this.ship.active) {
+    if (!this.mouse.locked) {
       const self = this;
       const bound = this.domElement.getBoundingClientRect();
 
@@ -383,7 +384,7 @@ Player.prototype = {
   },
 
   handleMouseMove(e) {
-    if (this.mouse.active && !(this.keys.left || this.keys.right)) {
+    if (this.mouse.active && !((this.keys.left || this.keys.right) && !this.ship.active)) {
       const bound = this.domElement.getBoundingClientRect();
 
       this.mouse.x = (e.clientX / this.domElement.width) * 2 - 1;

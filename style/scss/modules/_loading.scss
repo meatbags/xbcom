@@ -15,6 +15,7 @@
   justify-content: center;
   align-items: center;
   z-index: $indexLoading;
+  color: $pink;
 
   .loading-screen__inner {
     padding: $space;
@@ -32,7 +33,7 @@
       .loading-bar__inner {
         position: absolute;
         height: 100%;
-        background: $black;
+        background: $pink;
         animation: loading;
         animation-duration: $transition;
         animation-iteration-count: infinite;

@@ -30,15 +30,19 @@ Ship.prototype = {
   update: function(delta, player) {
     if (this.active) {
       // bank
-      this.bank += (this.target.bank - this.bank) * this.config.adjust.normal;
-      this.target.rotation.yaw += this.bank * delta;
+      //this.bank += (this.target.bank - this.bank) * this.config.adjust.normal;
+      //this.target.rotation.yaw += this.bank * delta;
 
       // accelerate
       this.speed += (this.target.speed - this.speed) * this.config.adjust.slow;
 
       // rotate
-      this.rotation.yaw += this.config.adjust.slow * minAngleDifference(this.rotation.yaw, this.target.rotation.yaw)
-      this.rotation.roll += (this.target.rotation.roll - this.rotation.roll) * this.config.adjust.slow;
+      const deltaYaw = this.config.adjust.slow * minAngleDifference(this.rotation.yaw, this.target.rotation.yaw);
+      this.rotation.yaw += deltaYaw;
+
+      // set roll
+      //this.target.rotation.roll = Math.min(.5, Math.max(-.5, deltaYaw * 100));
+      //this.rotation.roll += (this.target.rotation.roll - this.rotation.roll) * this.config.adjust.fast;
 
       // move target
       this.target.position.x += this.speed * Math.sin(this.rotation.yaw) * delta;
@@ -79,8 +83,8 @@ Ship.prototype = {
   },
 
   setBank: function(value) {
-    this.target.bank = value;
-    this.target.rotation.roll = (value == 0) ? 0 : ((value > 0) ? this.config.rotation.maxRoll : -this.config.rotation.maxRoll);
+    // this.target.bank = value;
+    // this.target.rotation.roll = (value == 0) ? 0 : ((value > 0) ? this.config.rotation.maxRoll : -this.config.rotation.maxRoll);
   },
 
   toggle: function() {

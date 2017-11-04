@@ -136,10 +136,12 @@ $hudButtonActiveSize: 80px;
 .hud__button {
   @extend .noselect;
   position: fixed;
-  top: 50%;
-  left: 50%;
-  margin-top: -$hudButtonSize / 2;
-  margin-left: -$hudButtonSize / 2;
+  bottom: 0;
+  left: 0;
+  // margin-bottom: -$hudButtonSize / 2;
+  margin-bottom: $space * 2;
+  margin-left: $space * 2;
+  //margin-left: -$hudButtonSize / 2;
   width: $hudButtonSize;
   height: $hudButtonSize;
   border-radius: $hudButtonSize;
@@ -153,9 +155,8 @@ $hudButtonActiveSize: 80px;
   align-items: center;
 
   &.active {
-    top: 0;
-    margin-top: $space * 2;
-    margin-left: -$hudButtonActiveSize / 2;
+    //margin-top: $space * 2;
+    //margin-left: -$hudButtonActiveSize / 2;
     width: $hudButtonActiveSize;
     height: $hudButtonActiveSize;
     border-radius: $hudButtonActiveSize;
