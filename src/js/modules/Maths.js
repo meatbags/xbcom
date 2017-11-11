@@ -1,4 +1,5 @@
 const twoPi = Math.PI * 2;
+const halfPi = Math.PI / 2;
 
 const wrap = function(value, min, max) {
   if (value < min) {
@@ -84,6 +85,12 @@ const pitchBetween = function(a, b) {
   return pitch;
 }
 
+const yawBetween = function(a, b) {
+  const yaw = Math.atan2(b.x - a.x, b.z - a.z);
+
+  return yaw;
+}
+
 const scaleVector = function(v, scale) {
   const vec = new THREE.Vector3(
     v.x * scale,
@@ -118,4 +125,4 @@ const dotProduct = function(a, b) {
   return a.x * b.x + a.y * b.y + a.z * b.z;
 };
 
-export { wrap, copyVector, isVectorEqual, pitchBetween, twoPi, distanceBetween, distanceBetween2D, minAngleDifference, dotProduct, addVector, subtractVector, scaleVector, crossProduct, reverseVector, normalise };
+export { wrap, copyVector, isVectorEqual, yawBetween, pitchBetween, halfPi, twoPi, distanceBetween, distanceBetween2D, minAngleDifference, dotProduct, addVector, subtractVector, scaleVector, crossProduct, reverseVector, normalise };

@@ -92,40 +92,57 @@
 .hud-menu {
   @extend .noselect;
   position: fixed;
-  width: 50vh;
+  width: 50vw;
   height: 50vh;
-  top: 50%;
-  left: 50%;
-  margin-top: -25vh;
-  margin-left: -25vh;
+  top: $space * 5;
+  left: $space * 3;
   pointer-events: none;
   z-index: $indexHUD;
-  opacity: 0;
-  border: 2px solid $pink;
-  padding: $space * 2;
   color: $pink;
-  transition: $transition;
-  transform: scale(0, 0);
-  background: $whiteTranslucent;
+  transition: $transitionFast;
 
-  &.active {
-    opacity: 1;
-    pointer-events: all;
-    transform: scale(1, 1);
+  &.active {}
+
+  &.expand-inner {
+    width: 75vw;
+
+    .hud-menu__row {
+      .hud-menu__row__inner {
+        width: 100%;
+      }
+    }
+  }
+
+  .hud-menu__row {
+    opacity: 0;
+    transform: translateX(-$space * 2);
+    transition: $transition;
+    width: 100%;
+    padding-top: $space;
+
+    .hud-menu__row__inner {
+      border-bottom: 1px solid $pink;
+      width: 65%;
+    }
+
+    &.active {
+      opacity: 1;
+      transform: translateX(0);
+
+      .hud-menu__row__inner {
+        pointer-events: all;
+      }
+    }
   }
 
   .menu-close {
     @extend .noselect;
     cursor: pointer;
-    text-decoration: underline;
-    position: absolute;
-    bottom: 0;
-    padding-bottom: $space * 2;
     transition: $transitionFast;
-    color: $darkPink;
+    color: $pink;
 
     &:hover {
-      color: $pink;
+      color: $darkPink;
     }
   }
 }

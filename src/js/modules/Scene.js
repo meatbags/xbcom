@@ -1,6 +1,7 @@
 import Player from './Player';
 import Loader from './Loader';
 import Config from './Config';
+import Bird from './Bird';
 
 const Scene = function(domElement) {
   this.domElement = domElement;
@@ -24,6 +25,7 @@ Scene.prototype = {
 
     // load stuff
     self.loadMaps();
+    self.loadExtras();
     self.loadLighting();
   },
 
@@ -85,6 +87,18 @@ Scene.prototype = {
     });
   },
 
+  loadExtras: function() {
+    const self = this;
+    self.birds = [];
+
+    for (let i=0; i<20; i+=1) {
+      const bird = new Bird();
+
+      self.birds.push(bird);
+      self.scene.add(bird.object);
+    }
+  },
+
   loadLighting: function() {
     const self = this;
 
@@ -113,6 +127,10 @@ Scene.prototype = {
     const self = this;
 
     self.player.update(delta, self.collider.ground, self.collider.objects);
+
+    for (let i=0; i<self.birds.length; i+=1) {
+      self.birds[i].update(delta, self.player.position);
+    }
   },
 };
 

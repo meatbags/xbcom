@@ -60,46 +60,72 @@ const App = {
     }
   },
 
+  openMenu: function($menu) {
+    App.closeMenu($('.hud-menu.active'));
+    $menu.addClass('active');
+    $menu.children('.hud-menu__row').each(function(i, e){
+      var $e = $(e);
+      setTimeout(function(){
+        $e.addClass('active');
+      }, i * 100);
+    });
+  },
+
+  closeMenu: function($menu) {
+    $menu.removeClass('active');
+    $menu.children('.hud-menu__row').each(function(i, e){
+      var $e = $(e);
+      setTimeout(function(){
+        $e.removeClass('active');
+      }, i * 100);
+    });
+  },
+
+  toggleMenu: function($menu) {
+    if ($menu.hasClass('active')) {
+      App.closeMenu($menu);
+    } else {
+      App.openMenu($menu);
+    }
+  },
+
   hud: function() {
-    App.navActive = false;
-    App.notified = false;
+    App.navActive = true; // TODO: hide
 
-    // about / controls
-    $('.nav-controls').on('click', function() {
-      if (App.navActive) {
-        $('#menu-controls').toggleClass('active');
-        $('#menu-about').removeClass('active');
-
-        // show/hide hud
-        if ($('#menu-controls').hasClass('active')) {
-          App.hideControls();
-          App.notified = true;
-        } else {
-          App.showControls();
-        }
-      }
+    // nav
+    $('.nav-projects').on('click', function() {
+      App.aboutOpened = true;
+      App.toggleMenu($('#menu-projects'));
     });
     $('.nav-about').on('click', function() {
-      if (App.navActive) {
-        $('#menu-controls').removeClass('active');
-        $('#menu-about').toggleClass('active');
-
-        // show/hide hud
-        if ($('#menu-about').hasClass('active')) {
-          App.hideControls();
-        } else {
-          App.showControls();
+      App.aboutOpened = true;
+      App.toggleMenu($('#menu-about'));
+    });
+    $('.nav-explore').on('click', function(){
+      App.exploreOpened = true;
+      App.aboutOpened = true;
+      var $menu = $('#menu-explore');
+      if (App.scene.player.ship.active) {
+        App.scene.player.ship.land();
+        if (!$menu.hasClass('active')) {
+          App.openMenu($menu);
+        }
+      } else {
+        App.scene.player.ship.takeOff();
+        if ($menu.hasClass('active')) {
+          App.closeMenu($menu);
         }
       }
     });
 
     // menu close buttons
     $('.menu-close').on('click', function(){
-      $(this).closest('.hud-menu').removeClass('active');
+      App.toggleMenu($(this).closest('.hud-menu'));
       App.showControls();
     });
 
     // landing button
+    /*
     $('#hud-button').on('click', function(){
       if ($(this).hasClass('active')) {
         // take off
@@ -136,7 +162,7 @@ const App = {
               if (!App.notified) {
                 $('.nav-controls').click();
               }
-            }, 2000)
+            }, 2000);
           }
         }
       }
@@ -171,6 +197,14 @@ const App = {
     setTimeout(function() {
       App.showControls();
       App.navActive = true;
+    }, 3000);
+    */
+
+    setTimeout(function(){
+      if (!App.aboutOpened) {
+        App.aboutOpened = true;
+        App.toggleMenu($('#menu-about'));
+      }
     }, 3000);
   },
 

@@ -1,0 +1,13 @@
+.grid {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.grid__third {
+  width: 33%;
+}
+
+.grid__half {
+  width: 50%;
+}

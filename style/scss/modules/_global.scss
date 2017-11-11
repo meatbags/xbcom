@@ -31,11 +31,11 @@ em {
 
 a {
   color: inherit;
-  text-decoration: underline;
-  color: $darkPink;
+  text-decoration: none;
+  color: $pink;
   transition: $transitionFast;
 
   &:hover {
-    color: $pink;
+    color: $darkPink;
   }
 }

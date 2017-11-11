@@ -29,58 +29,185 @@
       </div>
     </div>
     <div class='nav__grid right'>
-      <div class='nav-item nav-controls'>
-        CONTROLS
+      <div class='nav-item nav-projects'>
+        PROJECTS
       </div>
       <div class='nav-item nav-about'>
         ABOUT
+      </div>
+      <div class='nav-item nav-explore'>
+        MODE
       </div>
     </div>
   </div>
 
 <!--
-  <div class='hud'>
-    <div class='hud__inner hidden'>
-      <div class='hud__inner__grid blank'></div>
-      <div id='hud-right' class='hud__inner__grid transform-right filled'>
-        <div class='hud__inner__grid__inner'>
-          <div class='arrow text-huge'>&rarr;</div>
-        </div>
-      </div>
-      <div id='hud-left' class='hud__inner__grid transform-left filled'>
-        <div class='hud__inner__grid__inner'>
-          <div class='arrow text-huge'>&larr;</div>
-        </div>
-      </div>
-      <div class='hud__inner__grid blank'></div>
-    </div>
-  </div>
--->
-
   <div id='hud-button' class='hud__button hidden text-huge'>
     <div class='hud__button__inner'>&darr;</div>
   </div>
+-->
 
-  <div id='menu-about' class='hud-menu text-medium'>
-    <span class='underline'>XAVIER BURROW</span><br /><br />
-    ...is a programmer, animator, and web designer. See more projects
-    <a target='_blank' href='http://xavier-burrow.com/info/projects'>here</a>!
-    <br /><br />
-    Get in touch:<br />
-    <a target='_blank' href='https://github.com/meatbags'>Github</a>
-    <a target='_blank' href='https://www.instagram.com/xavebabes/'>Instagram</a>
-    <a target='_blank' href='mailto:jxburrow@gmail.com'>jxburrow@gmail.com</a>
-    <div class='menu-close'>CLOSE</div>
+  <div id='menu-about' class='hud-menu'>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner'>is a programmer, animator, and web developer</div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner'>working in the second, third dimension,</div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner'>and beyond</div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner'>&nbsp;</div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner'>
+        <a target='_blank' href='mailto:jxburrow@gmail.com'>jxburrow@gmail.com</a>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner'>
+        <a target='_blank' href='https://github.com/meatbags'>github</a>
+        <a target='_blank' href='https://www.instagram.com/xavebabes/'>instagram</a>
+        <a target='_blank' href='https://www.facebook.com/xavier.burrow'>facebook</a>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner'>&nbsp;</div>
+    </div>
+    <div class='hud-menu__row italics'>
+      <div class='hud-menu__row__inner'>
+        <span class='menu-close'>CLOSE</span>
+      </div>
+    </div>
   </div>
 
-  <div id='menu-controls' class='hud-menu text-medium'>
-    <span class='underline'>FLIGHT CONTROLS</span><br /><br />
-    <em>Click &amp; drag</em> to pan.<br /><br />
-    <span class='underline'>SURFACE CONTROLS</span><br /><br />
-    <em>Click &amp; drag</em> to pan.<br />
-    Use the <em>arrow keys</em> to move.<br />
-    Jump with the <em>space bar</em>.
-    <div class='menu-close'>GOT IT!</div>
+  <div id='menu-explore' class='hud-menu'>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner italics'>
+        CONTROLS
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__half'>pan camera</div><div class='grid__half'>click & drag</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__half'>walk</div><div class='grid__half'>arrow keys or WSAD</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__half'>jump</div><div class='grid__half'>space bar</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner italics'>
+        &nbsp;
+      </div>
+    </div>
+    <div class='hud-menu__row italics'>
+      <div class='hud-menu__row__inner'>
+        <span class='menu-close'>CLOSE</span>
+      </div>
+    </div>
+  </div>
+
+  <div id='menu-projects' class='hud-menu expand-inner'>
+    <div class='hud-menu__row italics'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__third'>PROJECT</div><div class='grid__third'>NATURE</div><div class='grid__third'>ROLE</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__third'><a target='_blank' href='http://closedmondaygallery.com/'>closed on mondays</a></div>
+        <div class='grid__third'>virtual gallery, work in progress</div>
+        <div class='grid__third'>developer, 3d modelling</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__third'><a target='_blank' href='https://play.google.com/store/apps/details?id=fr.paris.mareedeslettres&hl=en'>mar&eacute;e des lettres</a></div>
+        <div class='grid__third'>phone app, alt-reality, react-native</div>
+        <div class='grid__third'>programmer, contributor</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__third'><a target='_blank' href='http://victoria-beck.com/'>victoria beck</a></div>
+        <div class='grid__third'>fashion portfolio</div>
+        <div class='grid__third'>front-end development</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__third'><a target='_blank' href='https://www.alabamablonde.com/'>alabama blonde</a></div>
+        <div class='grid__third'>ecommerce, fashion site</div>
+        <div class='grid__third'>development, print design</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__third'><a target='_blank' href='http://wearecityplaza.com/'>we are city plaza</a></div>
+        <div class='grid__third'>photography site</div>
+        <div class='grid__third'>front-end development, interaction</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__third'><a target='_blank' href='http://trendtoursberlin.com/'>berlin trend tours</a></div>
+        <div class='grid__third'>interactive tours site</div>
+        <div class='grid__third'>front-end, interaction design</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__third'><a target='_blank' href='http://artinretail.com/'>artinretail</a></div>
+        <div class='grid__third'>business website</div>
+        <div class='grid__third'>development, interaction design</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__third'><a target='_blank' href='https://github.com/meatbags/vvector'>vvector</a></div>
+        <div class='grid__third'>javascript library</div>
+        <div class='grid__third'>developer</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__third'><a target='_blank' href='http://sockmama.com/'>sock mama</a></div>
+        <div class='grid__third'>ecommerce, business site</div>
+        <div class='grid__third'>front-end development, ecommerce</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__third'><a target='_blank' href='https://www.youtube.com/watch?v=-SLgXBLQA2M'>the pixies</a></div>
+        <div class='grid__third'>music video</div>
+        <div class='grid__third'>animation, compositing</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner grid'>
+        <div class='grid__third'><a target='_blank' href='http://xavier-burrow.com/info/'>microfictions</a></div>
+        <div class='grid__third'>fiction, blog</div>
+        <div class='grid__third'>author, deleter</div>
+      </div>
+    </div>
+    <div class='hud-menu__row'>
+      <div class='hud-menu__row__inner'>
+        &nbsp;
+      </div>
+    </div>
+    <div class='hud-menu__row italics'>
+      <div class='hud-menu__row__inner'>
+        <span class='menu-close'>CLOSE</span>
+      </div>
+    </div>
   </div>
 
   <div id='wrapper'>

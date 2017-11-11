@@ -11,6 +11,9 @@ const Player = function(domElement) {
     yaw: Config.Player.rotation.yaw,
     roll: Config.Player.rotation.roll
   };
+  this.previous = {
+    position: new THREE.Vector3(Config.Player.position.x, Config.Player.position.y, Config.Player.position.z)
+  };
   this.movement = new THREE.Vector3(0, 0, 0);
   this.offset = {
     rotation: {
@@ -78,7 +81,7 @@ Player.prototype = {
       this.position.set(this.ship.position.x, this.ship.position.y, this.ship.position.z);
     }
 
-  //this.logger.print(this.ship.rotation.roll);
+    //this.logger.print(this.ship.rotation.roll);
 
     this.move();
 	},
@@ -277,13 +280,23 @@ Player.prototype = {
   },
 
   move: function() {
+    // store previous
+    this.previous.position.x = this.target.position.x;
+    this.previous.position.y = this.target.position.y;
+    this.previous.position.z = this.target.position.z;
+
     // wrap inside play area
+    this.wrapped = false;
     const wrapx = Maths.wrap(this.target.position.x, this.config.area.walk.min, this.config.area.walk.max);
     const wrapz = Maths.wrap(this.target.position.z, this.config.area.walk.min, this.config.area.walk.max);
-    this.position.x = wrapx + (this.position.x - this.target.position.x);
-    this.position.z = wrapz + (this.position.z - this.target.position.z);
-    this.target.position.x = wrapx;
-    this.target.position.z = wrapz;
+    this.wrapped = ((wrapx != this.target.position.x) || (wrapz != this.target.position.z));
+
+    if (this.wrapped) {
+      this.position.x = wrapx + (this.position.x - this.target.position.x);
+      this.position.z = wrapz + (this.position.z - this.target.position.z);
+      this.target.position.x = wrapx;
+      this.target.position.z = wrapz;
+    }
 
     // move
     this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;

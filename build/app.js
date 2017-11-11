@@ -172,6 +172,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 var twoPi = Math.PI * 2;
+var halfPi = Math.PI / 2;
 
 var wrap = function wrap(value, min, max) {
   if (value < min) {
@@ -241,6 +242,12 @@ var pitchBetween = function pitchBetween(a, b) {
   return pitch;
 };
 
+var yawBetween = function yawBetween(a, b) {
+  var yaw = Math.atan2(b.x - a.x, b.z - a.z);
+
+  return yaw;
+};
+
 var scaleVector = function scaleVector(v, scale) {
   var vec = new THREE.Vector3(v.x * scale, v.y * scale, v.z * scale);
 
@@ -270,7 +277,9 @@ var dotProduct = function dotProduct(a, b) {
 exports.wrap = wrap;
 exports.copyVector = copyVector;
 exports.isVectorEqual = isVectorEqual;
+exports.yawBetween = yawBetween;
 exports.pitchBetween = pitchBetween;
+exports.halfPi = halfPi;
 exports.twoPi = twoPi;
 exports.distanceBetween = distanceBetween;
 exports.distanceBetween2D = distanceBetween2D;
@@ -359,55 +368,79 @@ var App = {
     }
   },
 
+  openMenu: function openMenu($menu) {
+    App.closeMenu($('.hud-menu.active'));
+    $menu.addClass('active');
+    $menu.children('.hud-menu__row').each(function (i, e) {
+      var $e = $(e);
+      setTimeout(function () {
+        $e.addClass('active');
+      }, i * 100);
+    });
+  },
+
+  closeMenu: function closeMenu($menu) {
+    $menu.removeClass('active');
+    $menu.children('.hud-menu__row').each(function (i, e) {
+      var $e = $(e);
+      setTimeout(function () {
+        $e.removeClass('active');
+      }, i * 100);
+    });
+  },
+
+  toggleMenu: function toggleMenu($menu) {
+    if ($menu.hasClass('active')) {
+      App.closeMenu($menu);
+    } else {
+      App.openMenu($menu);
+    }
+  },
+
   hud: function hud() {
-    App.navActive = false;
-    App.notified = false;
+    App.navActive = true; // TODO: hide
 
-    // about / controls
-    $('.nav-controls').on('click', function () {
-      if (App.navActive) {
-        $('#menu-controls').toggleClass('active');
-        $('#menu-about').removeClass('active');
-
-        // show/hide hud
-        if ($('#menu-controls').hasClass('active')) {
-          App.hideControls();
-          App.notified = true;
-        } else {
-          App.showControls();
-        }
-      }
+    // nav
+    $('.nav-projects').on('click', function () {
+      App.aboutOpened = true;
+      App.toggleMenu($('#menu-projects'));
     });
     $('.nav-about').on('click', function () {
-      if (App.navActive) {
-        $('#menu-controls').removeClass('active');
-        $('#menu-about').toggleClass('active');
-
-        // show/hide hud
-        if ($('#menu-about').hasClass('active')) {
-          App.hideControls();
-        } else {
-          App.showControls();
+      App.aboutOpened = true;
+      App.toggleMenu($('#menu-about'));
+    });
+    $('.nav-explore').on('click', function () {
+      App.exploreOpened = true;
+      App.aboutOpened = true;
+      var $menu = $('#menu-explore');
+      if (App.scene.player.ship.active) {
+        App.scene.player.ship.land();
+        if (!$menu.hasClass('active')) {
+          App.openMenu($menu);
+        }
+      } else {
+        App.scene.player.ship.takeOff();
+        if ($menu.hasClass('active')) {
+          App.closeMenu($menu);
         }
       }
     });
 
     // menu close buttons
     $('.menu-close').on('click', function () {
-      $(this).closest('.hud-menu').removeClass('active');
+      App.toggleMenu($(this).closest('.hud-menu'));
       App.showControls();
     });
 
     // landing button
-    $('#hud-button').on('click', function () {
+    /*
+    $('#hud-button').on('click', function(){
       if ($(this).hasClass('active')) {
         // take off
         App.scene.player.ship.takeOff();
-
-        if (App.scene.player.ship.active) {
+          if (App.scene.player.ship.active) {
           // update HUD
-
-          $(this).removeClass('active');
+            $(this).removeClass('active');
           $(this).removeClass('text-large');
           $(this).addClass('text-huge');
           $(this).find('.hud__button__inner').html('&darr;');
@@ -416,11 +449,9 @@ var App = {
       } else {
         // land ship
         App.scene.player.ship.land();
-
-        if (!App.scene.player.ship.active) {
+          if (!App.scene.player.ship.active) {
           // update HUD
-
-          $('.hud__inner').removeClass('active-left');
+            $('.hud__inner').removeClass('active-left');
           $('.hud__inner').removeClass('active-right');
           $('.hud__inner__grid').removeClass('active');
           $(this).removeClass('text-huge');
@@ -428,10 +459,9 @@ var App = {
           $(this).addClass('active');
           $(this).find('.hud__button__inner').html('&uarr;');
           $('.hud__inner').addClass('hidden');
-
-          // notify
+            // notify
           if (!App.notified) {
-            setTimeout(function () {
+            setTimeout(function(){
               if (!App.notified) {
                 $('.nav-controls').click();
               }
@@ -440,9 +470,8 @@ var App = {
         }
       }
     });
-
-    // spaceship controls (left/ right)
-    $('#hud-right').on('click', function () {
+      // spaceship controls (left/ right)
+    $('#hud-right').on('click', function() {
       $('.hud__inner').removeClass('active-left');
       $('.hud__inner').toggleClass('active-right');
       $('.hud__inner__grid').removeClass('active');
@@ -453,8 +482,7 @@ var App = {
         App.scene.player.ship.setBank(0);
       }
     });
-
-    $('#hud-left').on('click', function () {
+      $('#hud-left').on('click', function() {
       $('.hud__inner').removeClass('active-right');
       $('.hud__inner').toggleClass('active-left');
       $('.hud__inner__grid').removeClass('active');
@@ -465,11 +493,18 @@ var App = {
         App.scene.player.ship.setBank(0);
       }
     });
-
-    // show HUD
-    setTimeout(function () {
+      // show HUD
+    setTimeout(function() {
       App.showControls();
       App.navActive = true;
+    }, 3000);
+    */
+
+    setTimeout(function () {
+      if (!App.aboutOpened) {
+        App.aboutOpened = true;
+        App.toggleMenu($('#menu-about'));
+      }
     }, 3000);
   },
 
@@ -514,6 +549,10 @@ var _Config = __webpack_require__(0);
 
 var _Config2 = _interopRequireDefault(_Config);
 
+var _Bird = __webpack_require__(8);
+
+var _Bird2 = _interopRequireDefault(_Bird);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Scene = function Scene(domElement) {
@@ -538,6 +577,7 @@ Scene.prototype = {
 
     // load stuff
     self.loadMaps();
+    self.loadExtras();
     self.loadLighting();
   },
 
@@ -599,6 +639,18 @@ Scene.prototype = {
     });
   },
 
+  loadExtras: function loadExtras() {
+    var self = this;
+    self.birds = [];
+
+    for (var i = 0; i < 20; i += 1) {
+      var bird = new _Bird2.default();
+
+      self.birds.push(bird);
+      self.scene.add(bird.object);
+    }
+  },
+
   loadLighting: function loadLighting() {
     var self = this;
 
@@ -625,6 +677,10 @@ Scene.prototype = {
     var self = this;
 
     self.player.update(delta, self.collider.ground, self.collider.objects);
+
+    for (var i = 0; i < self.birds.length; i += 1) {
+      self.birds[i].update(delta, self.player.position);
+    }
   }
 };
 
@@ -668,6 +724,9 @@ var Player = function Player(domElement) {
     pitch: _Config2.default.Player.rotation.pitch,
     yaw: _Config2.default.Player.rotation.yaw,
     roll: _Config2.default.Player.rotation.roll
+  };
+  this.previous = {
+    position: new THREE.Vector3(_Config2.default.Player.position.x, _Config2.default.Player.position.y, _Config2.default.Player.position.z)
   };
   this.movement = new THREE.Vector3(0, 0, 0);
   this.offset = {
@@ -922,13 +981,23 @@ Player.prototype = {
   },
 
   move: function move() {
+    // store previous
+    this.previous.position.x = this.target.position.x;
+    this.previous.position.y = this.target.position.y;
+    this.previous.position.z = this.target.position.z;
+
     // wrap inside play area
+    this.wrapped = false;
     var wrapx = Maths.wrap(this.target.position.x, this.config.area.walk.min, this.config.area.walk.max);
     var wrapz = Maths.wrap(this.target.position.z, this.config.area.walk.min, this.config.area.walk.max);
-    this.position.x = wrapx + (this.position.x - this.target.position.x);
-    this.position.z = wrapz + (this.position.z - this.target.position.z);
-    this.target.position.x = wrapx;
-    this.target.position.z = wrapz;
+    this.wrapped = wrapx != this.target.position.x || wrapz != this.target.position.z;
+
+    if (this.wrapped) {
+      this.position.x = wrapx + (this.position.x - this.target.position.x);
+      this.position.z = wrapz + (this.position.z - this.target.position.z);
+      this.target.position.x = wrapx;
+      this.target.position.z = wrapz;
+    }
 
     // move
     this.position.x += (this.target.position.x - this.position.x) * this.config.adjust.veryFast;
@@ -1372,6 +1441,153 @@ Loader.prototype = {
 };
 
 exports.default = Loader;
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _Config = __webpack_require__(0);
+
+var _Config2 = _interopRequireDefault(_Config);
+
+var _Maths = __webpack_require__(1);
+
+var Maths = _interopRequireWildcard(_Maths);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var Bird = function Bird() {
+  this.min = _Config2.default.Area.walk.min - (_Config2.default.Area.walk.max - _Config2.default.Area.walk.min);
+  this.max = _Config2.default.Area.walk.max + (_Config2.default.Area.walk.max - _Config2.default.Area.walk.min);
+  this.range = this.max - this.min;
+  this.rangeHalf = this.range / 2;
+  this.rotation = { pitch: 0, yaw: 0, roll: 0 };
+  this.age = 0;
+  this.speed = 12;
+  this.glide = false;
+  this.glideTimer = 0;
+  this.target = {
+    age: 0,
+    maxAge: 0,
+    position: new THREE.Vector3(),
+    rotation: { pitch: 0, yaw: 0, roll: 0 }
+  };
+  this.init();
+};
+
+Bird.prototype = {
+  init: function init() {
+    // make wing geometry
+    var mat = new THREE.MeshBasicMaterial({ color: 0x888888, side: THREE.DoubleSide });
+    var geo1 = new THREE.BufferGeometry();
+    var geo2 = new THREE.BufferGeometry();
+    geo1.addAttribute('position', new THREE.BufferAttribute(new Float32Array([0, 0, -0.1, 0, 0, 0.1, 0.2, 0, 0]), 3));
+    geo2.addAttribute('position', new THREE.BufferAttribute(new Float32Array([0, 0, -0.1, 0, 0, 0.1, -0.2, 0, 0]), 3));
+
+    // set wings
+    this.wing = {
+      left: new THREE.Mesh(geo1, mat),
+      right: new THREE.Mesh(geo2, mat)
+    };
+
+    // set object
+    this.object = new THREE.Object3D();
+    this.object.add(this.wing.left, this.wing.right);
+    this.object.position.x = this.min + this.range * Math.random();
+    this.object.position.y = Math.random() * 64;
+    this.object.position.z = this.min + this.range * Math.random();
+
+    // set position target
+    this.position = this.object.position;
+
+    // set target
+    this.newTarget();
+  },
+
+  newTarget: function newTarget() {
+    // timer
+    this.target.age = 0;
+    this.target.maxAge = 10 * Math.random();
+
+    // position
+    this.target.position.x = this.min + this.range * Math.random();
+    this.target.position.y = -4 + 32 * Math.random();
+    this.target.position.z = this.min + this.range * Math.random();
+
+    // set rotation target
+    this.target.rotation.yaw = Maths.yawBetween(this.position, this.target.position);
+    this.target.rotation.pitch = Maths.pitchBetween(this.position, this.target.position);
+  },
+
+  update: function update(delta, position) {
+    // set new target
+    this.target.age += delta;
+
+    if (this.target.age > this.target.maxAge) {
+      this.newTarget();
+    }
+
+    // glide
+    if (this.glide) {
+      // rotate wings slow
+      this.age += delta * 4;
+
+      this.glideTimer -= delta;
+
+      if (this.glideTimer < 0) {
+        this.glide = false;
+      }
+    } else {
+      // rotate wings fast
+      this.age += Math.random() * delta * 8 + delta * 10;
+
+      if (Math.random() < 0.005) {
+        this.glide = true;
+        this.glideTimer = Math.random() * 5;
+      }
+    }
+
+    this.wing.left.rotation.z = Math.sin(this.age) * Maths.halfPi;
+    this.wing.right.rotation.z = -Math.sin(this.age) * Maths.halfPi;
+
+    // rotate
+    this.rotation.yaw += Maths.minAngleDifference(this.rotation.yaw, this.target.rotation.yaw) * _Config2.default.Adjust.verySlow;
+    this.rotation.pitch += Maths.minAngleDifference(this.rotation.pitch, this.target.rotation.pitch) * _Config2.default.Adjust.verySlow;
+    this.object.rotation.y = this.rotation.yaw;
+
+    // move
+    this.position.x += Math.sin(this.rotation.yaw) * delta * this.speed;
+    this.position.y += Math.sin(this.rotation.pitch) * delta * this.speed;
+    this.position.z += Math.cos(this.rotation.yaw) * delta * this.speed;
+
+    // limit
+    var dx = this.position.x - position.x;
+    var dz = this.position.z - position.z;
+
+    if (dx > this.rangeHalf) {
+      this.position.x -= this.range;
+    } else if (dx < -this.rangeHalf) {
+      this.position.x += this.range;
+    }
+
+    if (dz > this.rangeHalf) {
+      this.position.z -= this.range;
+    } else if (dz < -this.rangeHalf) {
+      this.position.z += this.range;
+    }
+  }
+};
+
+exports.default = Bird;
 
 /***/ })
 /******/ ]);
